@@ -1,0 +1,16 @@
+name: freetds_example
+description: Demonstrates how to use the freetds plugin.
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.0.5 <4.0.0'
+dependencies:
+  flutter:
+    sdk: flutter
+  freetds:
+    path: ../
+  logger: ^2.0.1
+  cupertino_icons: ^1.0.2
+
+flutter:
+  uses-material-design: true

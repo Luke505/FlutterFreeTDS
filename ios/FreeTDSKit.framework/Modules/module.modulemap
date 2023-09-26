@@ -1,0 +1,6 @@
+framework module FreeTDSKit {
+  umbrella header "FreeTDSKit.h"
+
+  export *
+  module * { export * }
+}
