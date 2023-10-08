@@ -169,19 +169,6 @@ class FreeTDS {
       }
     } catch (_) {}
 
-    if (instance._library.dbdead(dbproc) != 0 && (dbproc == nullptr || dbproc.ref.msdblib == 0)) {
-      return EXIT;
-    }
-
-    if (dbproc == nullptr || dbproc.ref.msdblib == 0) {
-      switch (dberr) {
-        case EXTIME:
-          return EXIT;
-        default:
-          break;
-      }
-    }
-
     return CANCEL;
   }
 
