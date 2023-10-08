@@ -994,6 +994,9 @@ class FreeTDS_library {
     if (Platform.isMacOS || Platform.isIOS) {
       _library = DynamicLibrary.open('FreeTDSKit.framework/FreeTDSKit');
       _loadLibraryFunctions();
+    } else if (Platform.isWindows) {
+      _library = DynamicLibrary.open('sybdb.dll');
+      _loadLibraryFunctions();
     } else {
       throw UnsupportedError('FreeTDS is only supported on iOS and macOS.');
     }

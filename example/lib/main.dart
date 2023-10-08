@@ -17,7 +17,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  Logger logger = Logger(level: Level.all);
+  Logger logger = Logger(level: Level.debug);
 
   bool loading = false;
   String? error;
@@ -38,7 +38,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
 
-    _freetdsPlugin.logger = (Level level, String message) {
+    FreeTDS.logger = (Level level, String message) {
       logger.log(Level.values.firstWhere((l) => l.value == level.value), message);
     };
   }

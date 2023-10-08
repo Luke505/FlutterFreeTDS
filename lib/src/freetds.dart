@@ -50,7 +50,7 @@ class FreeTDS {
   static FreeTDS get instance => _instance ??= FreeTDS._internal();
 
   FreeTDS._internal() {
-    if (Platform.isMacOS || Platform.isIOS) {
+    if (Platform.isMacOS || Platform.isIOS || Platform.isWindows) {
       _library = FreeTDS_library();
     } else {
       throw UnsupportedError('FreeTDS is only supported on iOS and macOS.');
@@ -68,7 +68,7 @@ class FreeTDS {
   }
 
   FreeTDS._test(String libraryPath) {
-    if (Platform.isMacOS || Platform.isIOS) {
+    if (Platform.isMacOS || Platform.isIOS || Platform.isWindows) {
       _library = FreeTDS_library.test(libraryPath);
     } else {
       throw UnsupportedError('FreeTDS is only supported on iOS and macOS.');

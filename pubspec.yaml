@@ -28,3 +28,5 @@ flutter:
         pluginClass: FreeTDSFlutterPlugin
       macos:
         pluginClass: FreeTDSFlutterPlugin
+      windows:
+        pluginClass: freetds_plugin
