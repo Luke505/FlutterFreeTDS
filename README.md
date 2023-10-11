@@ -8,14 +8,9 @@ Win32 (with or without Cygwin), VMS, and Mac OS X.
 FreeTDS is licensed under the GNU LGPL license. See [COPYING_LIB.txt](./COPYING_LIB.txt) for
 details.
 
-FreeTDS project compiling for iOS and macOS.
+FreeTDS project compiling for macOS, iOS and windows.
 
-
-FreeTDS 1.3.18
-```bash
-flutter create --platforms=macos . 
-flutter build macos-framework -t lib/freetds.dart
-```
+FreeTDS v.1.3.18
 
 ## Sybase datatype
 

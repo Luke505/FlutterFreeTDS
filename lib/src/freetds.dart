@@ -53,7 +53,7 @@ class FreeTDS {
     if (Platform.isMacOS || Platform.isIOS || Platform.isWindows) {
       _library = FreeTDS_library();
     } else {
-      throw UnsupportedError('FreeTDS is only supported on iOS and macOS.');
+      throw UnsupportedError('FreeTDS is only supported on macOS, iOS and windows.');
     }
 
     if (_library.dbinit() == FAIL) {
@@ -71,7 +71,7 @@ class FreeTDS {
     if (Platform.isMacOS || Platform.isIOS || Platform.isWindows) {
       _library = FreeTDS_library.test(libraryPath);
     } else {
-      throw UnsupportedError('FreeTDS is only supported on iOS and macOS.');
+      throw UnsupportedError('FreeTDS is only supported on macOS, iOS and windows.');
     }
 
     if (_library.dbinit() == FAIL) {

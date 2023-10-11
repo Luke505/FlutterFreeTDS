@@ -48,6 +48,7 @@ base class DBNUMERIC extends Struct {
   @Array(33)
   external Array<Uint8> array;
 }
+
 typedef DBDECIMAL = DBNUMERIC;
 
 base class DBMONEY extends Struct {
@@ -202,7 +203,6 @@ typedef TDS_INTPTR = IntPtr;
 typedef TDS_REAL = Float;
 typedef TDS_FLOAT = Double;
 
-
 typedef TDSCOMPUTEINFO = TDSRESULTINFO;
 typedef TDSICONV = TDSICONVINFO;
 
@@ -219,7 +219,6 @@ base class TDSPACKET extends Struct {
   @Uint8()
   external int buf;
 }
-
 
 base class TDSLOCALE extends Struct {
   external Pointer<Utf8> language;
@@ -998,7 +997,7 @@ class FreeTDS_library {
       _library = DynamicLibrary.open('sybdb.dll');
       _loadLibraryFunctions();
     } else {
-      throw UnsupportedError('FreeTDS is only supported on iOS and macOS.');
+      throw UnsupportedError('FreeTDS is only supported on macOS, iOS and windows.');
     }
   }
 

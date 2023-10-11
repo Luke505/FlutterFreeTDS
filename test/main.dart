@@ -19,8 +19,10 @@ Future<void> main() async {
     libraryPath = 'macos/FreeTDSKit.framework/FreeTDSKit';
   } else if (Platform.isIOS) {
     libraryPath = 'ios/FreeTDSKit.framework/FreeTDSKit';
+  } else if (Platform.isWindows) {
+    libraryPath = 'windows/sybdb.dll';
   } else {
-    throw UnsupportedError('FreeTDS is only supported on iOS and macOS.');
+    throw UnsupportedError('FreeTDS is only supported on macOS, iOS and windows.');
   }
 
   late FreeTDS freetds;
