@@ -444,6 +444,10 @@ typedef struct
 
 #define MAXOPTTEXT    32
 
+#define ENCRYPTION_OFF     "off"
+#define ENCRYPTION_REQUEST "request"
+#define ENCRYPTION_REQUIRE "require"
+
 typedef struct tds_dblib_dbprocess DBPROCESS;
 typedef struct tds_dblib_queryparam TDSQUERYPARAM;
 
@@ -1245,6 +1249,7 @@ RETCODE dbsetlbool(LOGINREC * login, int value, int which);
 RETCODE dbsetlshort(LOGINREC * login, int value, int which);
 RETCODE dbsetllong(LOGINREC * login, long value, int which);
 RETCODE dbsetlversion (LOGINREC * login, BYTE version);
+RETCODE dbsetlencryption(LOGINREC * login, const char *value);
 
 #define DBSETHOST		1
 #define DBSETLHOST(x,y)		dbsetlname((x), (y), DBSETHOST)
@@ -1286,6 +1291,8 @@ RETCODE dbsetlversion (LOGINREC * login, BYTE version);
 #define BCP_SETLABELED(x,y)	dbsetlbool((x), (y), DBSETLABELED)
 #define DBSETDBNAME		14
 #define DBSETLDBNAME(x,y)	dbsetlname((x), (y), DBSETDBNAME)
+#define DBSETENCRYPTION        15
+#define DBSETLENCRYPTION(x,y)    dbsetlname((x), (y), DBSETENCRYPTION)
 #define DBSETLVERSION(login, version) dbsetlversion((login), (version))
 #define DBSETNETWORKAUTH	101
 #define DBSETLNETWORKAUTH(x, y)	dbsetlbool((x), (y), DBSETNETWORKAUTH)

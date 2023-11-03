@@ -1,42 +1,37 @@
-# FreeTDS Flutter
+# FreeTDS for Flutter
 
-FreeTDS is a free implementation of Sybase's DB-Library, CT-Library,
-and ODBC libraries. FreeTDS builds and runs on every flavor of
-unix-like systems we've heard of (and some we haven't) as well as
-Win32 (with or without Cygwin), VMS, and Mac OS X.
+FreeTDS for Flutter is a Flutter library that enables connectivity to a SAP Sql Anywhere 17 database.
 
-FreeTDS is licensed under the GNU LGPL license. See [COPYING_LIB.txt](./COPYING_LIB.txt) for
-details.
+## Installation
 
-FreeTDS project compiling for macOS, iOS and windows.
+### Using Docker
 
-FreeTDS v.1.3.18
+If you want to use Docker to create a development environment, follow these steps:
 
-## Sybase datatype
+1. Make sure Docker is installed on your system.
+2. Navigate to the "db" folder in your project.
+2. Copy the file "sqlany17.tar" to the "installer" folder, You can download a trial version from [this link](https://www.sap.com/products/technology-platform/sql-anywhere/trial.html).
+3. Run the `docker build . --tag=sybase:17 --network=host` command to create a Docker image with SAP Sql Anywhere 17.
+3. Run the `docker-compose up -d` command to start a Docker container with SAP Sql Anywhere 17.
+4. Once the container is up and running, you can use the SAP Sql Anywhere 17 database for developing and testing your library.
 
-| constant     | storage formats   |
-|--------------|-------------------|
-| SYBCHAR      | char              |
-| SYBVARCHAR   | varchar           |
-| SYBNVARCHAR  | nvarchar          |
-| SYBTEXT      | text              |
-| SYBNTEXT     | ntext             |
-| SYBBINARY    | binary, timestamp |
-| SYBVARBINARY | varbinary         |
-| SYBIMAGE     | image             |
-| SYBINT1      | tinyint           |
-| SYBINT2      | smallint          |
-| SYBINT4      | int               |
-| SYBINT8      | bigint            |
-| SYBFLT8      | float             |
-| SYBFLT8      | double            |
-| SYBREAL      | real              |
-| SYBBIT       | bit               |
-| SYBNUMERIC   | numeric           |
-| SYBDECIMAL   | decimal           |
-| SYBMONEY     | money             |
-| SYBMONEY4    | small money       |
-| SYBDATETIME  | datetime          |
-| SYBDATETIME4 | small datetime    |
-| SYBDATE      | date              |
-| SYBTIME      | time              |
+### Manual Installation
+
+If you prefer to install SAP Sql Anywhere 17 manually, follow these steps:
+
+1. Download SAP Sql Anywhere 17 from the [download page](https://www.sap.com/products/technology-platform/sql-anywhere/trial.html).
+2. Extract the contents of the "sqlany17.tar" file to your system.
+3. Follow the installation instructions for SAP Sql Anywhere 17 provided in the official documentation.
+
+## Using the Library
+
+Now that you've set up your SAP Sql Anywhere 17 environment, you can use FreeTDS for Flutter to connect to the database.
+
+## FreeTDS Native Library
+
+FreeTDS for Flutter utilizes the native FreeTDS library version 1.3.18. Modifications and enhancements have been made to this version. You can review the specific changes in
+the [changelog here](https://github.com/Luke505/AppleFreeTDS/blob/main/src/freetds/ChangeLog.md).
+
+## License
+
+FreeTDS for Flutter is released under the following license: [GNU LGPL](LICENSE).

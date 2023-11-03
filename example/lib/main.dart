@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:freetds/freetds.dart';
 import 'package:logger/logger.dart';
+import 'package:tempo/tempo.dart';
 
 void main() {
   runApp(const MyApp());
@@ -26,18 +27,23 @@ class _MyAppState extends State<MyApp> {
   TextEditingController hostname = TextEditingController(text: "127.0.0.1:2638");
   TextEditingController username = TextEditingController(text: "dba");
   TextEditingController password = TextEditingController(text: "sql");
-  TextEditingController database = TextEditingController(text: "sys");
+  TextEditingController database = TextEditingController(text: "test");
+  TextEditingController encryption = TextEditingController(text: "");
   TextEditingController query = TextEditingController(text: "SELECT TOP 100 * FROM SYSTABLE");
 
   final FreeTDS _freetdsPlugin = FreeTDS.instance;
 
   StreamSubscription? messageStreamSubscription;
-  StreamSubscription? errorStreamSubscription;
+  StreamSubscription<FreeTDSError>? errorStreamSubscription;
 
   @override
   void initState() {
     super.initState();
 
+    FreeTDS.setErrorStream(true);
+    errorStreamSubscription = FreeTDS.errorStream!.stream.listen((FreeTDSError event) {
+      logger.log(Level.error, event);
+    });
     FreeTDS.logger = (Level level, String message) {
       logger.log(Level.values.firstWhere((l) => l.value == level.value), message);
     };
@@ -45,10 +51,9 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void dispose() {
-    super.dispose();
-
     messageStreamSubscription?.cancel();
     errorStreamSubscription?.cancel();
+    super.dispose();
   }
 
   @override
@@ -85,6 +90,33 @@ class _MyAppState extends State<MyApp> {
                   decoration: const InputDecoration(labelText: 'Database'),
                   controller: database,
                   enabled: !loading,
+                ),
+                DropdownButtonFormField<String>(
+                  value: encryption.text,
+                  icon: const Icon(Icons.keyboard_arrow_down),
+                  //elevation: 16,
+                  style: const TextStyle(color: Colors.black),
+                  decoration: InputDecoration(
+                    enabledBorder: InputBorder.none,
+                    labelText: "Encryption",
+                  ),
+                  onChanged: (String? value) {
+                    setState(() {
+                      encryption.text = value ?? "";
+                    });
+                  },
+                  items: [...SYBEncryptionLevel.values].map<DropdownMenuItem<String>>((item) {
+                    return DropdownMenuItem<String>(
+                      value: item.value,
+                      child: Text(
+                        item.name,
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 18.0,
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
                 TextField(
                   decoration: const InputDecoration(labelText: 'Query'),
@@ -169,53 +201,65 @@ class _MyAppState extends State<MyApp> {
     });
 
     logger.i("connect ...");
-
-    var database = this.database.text.isNotEmpty ? this.database.text : null;
-    try {
-      await _freetdsPlugin.connect(host: hostname.text, username: username.text, password: password.text, database: database);
-    } on FreeTDSException catch (e, st) {
-      logger.e("Connection exception", error: e, stackTrace: st);
-      setState(() {
-        error = e.message;
-        loading = false;
-      });
-      return;
-    } catch (e, st) {
-      var message = "Unknown exception";
-      logger.e(message, error: e, stackTrace: st);
-      setState(() {
-        error = message;
-        loading = false;
-      });
-      return;
-    }
-
-    logger.i("execute ...");
-
     List<FreeTDSExecutionResultTable>? tmpResult;
+
     try {
-      tmpResult = await _freetdsPlugin.query(query.text, []);
-    } on FreeTDSException catch (e, st) {
-      logger.e("Query execute exception", error: e, stackTrace: st);
-      setState(() {
-        error = e.message;
-        loading = false;
-      });
-      return;
+      var database = this.database.text.isNotEmpty ? this.database.text : null;
+      var encryption = this.encryption.text.isNotEmpty ? SYBEncryptionLevel.values.firstWhere((it) => it.value == this.encryption.text) : null;
+      try {
+        await _freetdsPlugin.connect(host: hostname.text, username: username.text, password: password.text, database: database, encryption: encryption);
+      } on FreeTDSException catch (e, st) {
+        logger.e("Connection exception", error: e, stackTrace: st);
+        setState(() {
+          error = e.message;
+          loading = false;
+        });
+        return;
+      } catch (e, st) {
+        var message = "Unknown exception";
+        logger.e(message, error: e, stackTrace: st);
+        setState(() {
+          error = message;
+          loading = false;
+        });
+        return;
+      }
+
+      logger.i("execute ...");
+
+      try {
+        tmpResult = await _freetdsPlugin.query(query.text, []);
+      } on FreeTDSException catch (e, st) {
+        logger.e("Query execute exception", error: e, stackTrace: st);
+        setState(() {
+          error = e.message;
+          loading = false;
+        });
+        return;
+      } catch (e, st) {
+        var message = "Unknown exception";
+        logger.e(message, error: e, stackTrace: st);
+        setState(() {
+          error = message;
+          loading = false;
+        });
+        return;
+      }
+
+      logger.i("result: $tmpResult");
+
+      for (var table in tmpResult) {
+        logger.i("output of #${table.affectedRows} affected rows: ${json.encode(table.data, toEncodable: (dynamic object) {
+          if (object is OffsetDateTime) {
+            return object.toString();
+          } else {
+            return object.toJson();
+          }
+        })}");
+      }
+
     } catch (e, st) {
-      var message = "Unknown exception";
-      logger.e(message, error: e, stackTrace: st);
-      setState(() {
-        error = message;
-        loading = false;
-      });
-      return;
-    }
-
-    logger.i("result: $tmpResult");
-
-    for (var table in tmpResult) {
-      logger.i("output of #${table.affectedRows} affected rows: ${json.encode(table.data)}");
+      logger.e("Process exception", error: e, stackTrace: st);
     }
 
     try {

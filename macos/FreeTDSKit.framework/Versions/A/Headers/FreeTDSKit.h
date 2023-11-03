@@ -2,7 +2,7 @@
 //  FreeTDSKit.h
 //  FreeTDSKit
 //
-//  Created by Kyle Hankinson on 2017-01-05.
+//  Created by Luca Ciampa on 2023-09-26.
 //
 //
 

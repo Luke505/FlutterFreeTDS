@@ -11,4 +11,10 @@ class FreeTDSError {
   String toString() {
     return 'FreeTDSError{error: $error, code: $code, severity: $severity}';
   }
+
+  Map<String, dynamic> toJson() => {
+        "error": this.error,
+        "code": this.code,
+        "severity": this.severity,
+      };
 }

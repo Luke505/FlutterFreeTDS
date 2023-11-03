@@ -4,9 +4,8 @@ import 'dart:ffi';
 import 'dart:io' show Platform;
 
 import 'package:ffi/ffi.dart';
-
-import 'constants.dart';
-import 'utils/connection_utils.dart';
+import 'package:freetds/src/constants.dart';
+import 'package:freetds/src/utils/connection_utils.dart';
 
 /// SQLClient
 
@@ -889,7 +888,7 @@ typedef dbcolname_Native = Pointer<Utf8> Function(Pointer<DBPROCESS> dbproc, Int
 typedef dbcoltype_Native = Int32 Function(Pointer<DBPROCESS> dbproc, Int32 column);
 typedef dbcollen_Native = Int32 Function(Pointer<DBPROCESS> dbproc, Int32 column);
 typedef dbbind_Native = Int32 Function(Pointer<DBPROCESS> dbproc, Int32 column, Int32 vartype, Int32 varlen, Pointer<Uint8> varaddr);
-typedef dbanydatecrack_Native = Int32 Function(Pointer<DBPROCESS> dbproc, Pointer<DBDATEREC2> di, Int32 type, Pointer<Void> data);
+typedef dbanydatecrack_Native = Int32 Function(Pointer<DBPROCESS> dbproc, Pointer<DBDATEREC2> di, Int32 type, Pointer<Uint8> data);
 typedef dbconvert_Native = Int32 Function(Pointer<DBPROCESS> dbproc, Int32 srctype, Pointer<Uint8> src, Int32 srclen, Int32 desttype, Pointer<Uint8> dest, Int32 destlen);
 typedef dbdatecrack_Native = Int32 Function(Pointer<DBPROCESS> dbproc, Pointer<DBDATEREC> di, Pointer<DBDATETIME> dt);
 typedef dbsettime_Native = Int32 Function(Int32 seconds);
@@ -932,7 +931,7 @@ typedef dbcolname_Dart = Pointer<Utf8> Function(Pointer<DBPROCESS> dbproc, int c
 typedef dbcoltype_Dart = int Function(Pointer<DBPROCESS> dbproc, int column);
 typedef dbcollen_Dart = int Function(Pointer<DBPROCESS> dbproc, int column);
 typedef dbbind_Dart = int Function(Pointer<DBPROCESS> dbproc, int column, int vartype, int varlen, Pointer<Uint8> varaddr);
-typedef dbanydatecrack_Dart = int Function(Pointer<DBPROCESS> dbproc, Pointer<DBDATEREC2> di, int type, Pointer<Void> data);
+typedef dbanydatecrack_Dart = int Function(Pointer<DBPROCESS> dbproc, Pointer<DBDATEREC2> di, int type, Pointer<Uint8> data);
 typedef dbconvert_Dart = int Function(Pointer<DBPROCESS> dbproc, int srctype, Pointer<Uint8> src, int srclen, int desttype, Pointer<Uint8> dest, int destlen);
 typedef dbdatecrack_Dart = int Function(Pointer<DBPROCESS> dbproc, Pointer<DBDATEREC> di, Pointer<DBDATETIME> dt);
 typedef dbsettime_Dart = int Function(int seconds);

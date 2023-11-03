@@ -4,7 +4,7 @@ publish_to: 'none'
 version: 1.1.0
 
 environment:
-  sdk: '>=3.0.5 <4.0.0'
+  sdk: '>=3.1.4 <4.0.0'
   flutter: ">=3.7.0"
 
 dependencies:
@@ -12,12 +12,12 @@ dependencies:
     sdk: flutter
   ffi: ^1.2.0
   tempo: ^0.5.2
-  logger: ^2.0.1
   queue: ^3.1.0+2
   decimal: ^2.3.3
-  fixnum: ^1.1.0
+  logger: ^2.0.2+1
 
 dev_dependencies:
+  flutter_lints:
   flutter_test:
     sdk: flutter
 
