@@ -10,10 +10,10 @@ If you want to use Docker to create a development environment, follow these step
 
 1. Make sure Docker is installed on your system.
 2. Navigate to the "db" folder in your project.
-2. Copy the file "sqlany17.tar" to the "installer" folder, You can download a trial version from [this link](https://www.sap.com/products/technology-platform/sql-anywhere/trial.html).
-3. Run the `docker build . --tag=sybase:17 --network=host` command to create a Docker image with SAP Sql Anywhere 17.
-3. Run the `docker-compose up -d` command to start a Docker container with SAP Sql Anywhere 17.
-4. Once the container is up and running, you can use the SAP Sql Anywhere 17 database for developing and testing your library.
+3. Copy the file "sqlany17.tar" to the "installer" folder, You can download a trial version from [this link](https://www.sap.com/products/technology-platform/sql-anywhere/trial.html).
+4. Run the `docker build . --tag=sybase:17 --network=host` command to create a Docker image with SAP Sql Anywhere 17.
+5. Run the `docker-compose up -d` command to start a Docker container with SAP Sql Anywhere 17.
+6. Once the container is up and running, you can use the SAP Sql Anywhere 17 database for developing and testing your library.
 
 ### Manual Installation
 

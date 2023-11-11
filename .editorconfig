@@ -50,5 +50,13 @@ ij_shell_redirect_followed_by_space = false
 ij_shell_switch_cases_indented = false
 ij_shell_use_unix_line_separator = true
 
-[{*.yaml, *.yml}]
+[{*.yaml,*.yml}]
 indent_size = 2
+
+[{ios/FreeTDSKit.framework/Info.plist,macos/FreeTDSKit.framework/Info.plist}]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+indent_style = unset
+indent_size = unset
