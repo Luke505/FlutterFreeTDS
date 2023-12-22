@@ -158,16 +158,15 @@ class QueryParam {
     this.datatype = dataType;
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      "name": name,
-      "output": output,
-      "datatype": datatype,
-      "maxlen": maxlen,
+  @override
+  String toString() => 'QueryParam{name: $name, output: $output, datatype: $datatype, maxlen: $maxlen, scale: $scale,'
+      ' precision: $precision, datalen: $datalen, value: $value}';
+
+  Map<String, dynamic> toJson() =>
+      {"name": name, "output": output, "datatype": datatype, "maxlen": maxlen,
       "scale": scale,
       "precision": precision,
       "datalen": datalen,
       "value": value?.asTypedList(datalen)
     };
-  }
 }

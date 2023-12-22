@@ -12,7 +12,9 @@ import 'package:freetds/src/constants.dart';
 import 'package:freetds/src/error/freetds_error_message.dart';
 import 'package:freetds/src/error/freetds_exception.dart';
 import 'package:freetds/src/execution_result.dart';
-import 'package:freetds/src/library.dart';
+import 'package:freetds/src/library/library.dart';
+import 'package:freetds/src/library/model/functions.dart';
+import 'package:freetds/src/library/model/model.dart';
 import 'package:freetds/src/query_param.dart';
 import 'package:freetds/src/utils/connection_utils.dart';
 import 'package:logger/logger.dart';
@@ -40,7 +42,7 @@ class FreeTDS {
 
   static Queue? _queue;
   static FreeTDS? _instance;
-  late FreeTDS_library _library;
+  late Library _library;
 
   static FreeTDSError? lastError;
   static StreamController<FreeTDSError>? errorStream;
@@ -50,7 +52,7 @@ class FreeTDS {
 
   FreeTDS._internal() {
     if (Platform.isMacOS || Platform.isIOS || Platform.isWindows) {
-      _library = FreeTDS_library();
+      _library = Library();
     } else {
       throw UnsupportedError('FreeTDS is only supported on macOS, iOS and windows.');
     }
@@ -62,13 +64,13 @@ class FreeTDS {
     lastError = null;
     setQueue(true);
     setErrorStream(false);
+    _library.dbmsghandle(Pointer.fromFunction<mhandlefunc_Native>(_handleMessage, TDS_SUCCESS));
     _library.dberrhandle(Pointer.fromFunction<ehandlefunc_Native>(_handleError, CANCEL));
-    //_library.dbmsghandle(Pointer.fromFunction<mhandlefunc_Native>(_handleMessage, CANCEL));
   }
 
   FreeTDS._test(String libraryPath, bool queue, bool onErrorCrash) {
     if (Platform.isMacOS || Platform.isIOS || Platform.isWindows) {
-      _library = FreeTDS_library.test(libraryPath);
+      _library = Library.test(libraryPath);
     } else {
       throw UnsupportedError('FreeTDS is only supported on macOS, iOS and windows.');
     }
@@ -82,15 +84,16 @@ class FreeTDS {
     setErrorStream(true);
 
     if (!onErrorCrash) {
+      _library.dbmsghandle(Pointer.fromFunction<mhandlefunc_Native>(_handleMessage, TDS_SUCCESS));
       _library.dberrhandle(Pointer.fromFunction<ehandlefunc_Native>(_handleError, CANCEL));
     } else {
+      _library.dbmsghandle(Pointer.fromFunction<mhandlefunc_Native>(_handleMessage, TDS_SUCCESS));
       _library.dberrhandle(Pointer.fromFunction<ehandlefunc_Native>(_handleErrorAndCrash, EXIT));
     }
-    //_library.dbmsghandle(Pointer.fromFunction<mhandlefunc_Native>(_handleMessage, CANCEL));
   }
 
   @visibleForTesting
-  static FreeTDS_library initTest(String libraryPath, bool queue, bool onErrorCrash, Logger logger) {
+  static Library initTest(String libraryPath, bool queue, bool onErrorCrash, Logger logger) {
     _instance = FreeTDS._test(libraryPath, queue, onErrorCrash);
 
     FreeTDS.logger = (Level level, String msg) => logger.log(level, msg);
@@ -102,7 +105,7 @@ class FreeTDS {
   }
 
   @visibleForTesting
-  FreeTDS_library get library => this._library;
+  Library get library => this._library;
 
   @visibleForTesting
   Pointer<DBPROCESS> get connection => this._connection;
@@ -165,16 +168,27 @@ class FreeTDS {
   // region Handler
 
   // Handles message callback from FreeTDS library.
-  // ignore: unused_element
   static int _handleMessage(Pointer<DBPROCESS> dbproc, int msgno, int msgstate, int severity, Pointer<Utf8> msgtext, Pointer<Utf8> srvname,
       Pointer<Utf8> procname, int line) {
-    return CANCEL;
+    try {
+      if (severity > 10) {
+        var error = FreeTDSError(msgtext.toDartString(), severity);
+        lastError = error;
+        if (errorStream != null && !errorStream!.isClosed) {
+          errorStream!.add(error);
+        }
+      }
+    } catch (_) {}
+
+    return TDS_SUCCESS;
   }
 
   // Handles error callback from FreeTDS library.
   static int _handleError(Pointer<DBPROCESS> dbproc, int severity, int dberr, int oserr, Pointer<Utf8> dberrstr, Pointer<Utf8> oserrstr) {
+    if (oserrstr == nullptr) return CANCEL;
+
     try {
-      var error = FreeTDSError(dberrstr.toDartString(), dberr, severity);
+      var error = FreeTDSError(dberrstr.toDartString(), severity);
       lastError = error;
       if (errorStream != null && !errorStream!.isClosed) {
         errorStream!.add(error);
@@ -185,7 +199,7 @@ class FreeTDS {
   }
 
   static int _handleErrorAndCrash(Pointer<DBPROCESS> dbproc, int severity, int dberr, int oserr, Pointer<Utf8> dberrstr, Pointer<Utf8> oserrstr) {
-    logger!(Level.error, FreeTDSError(dberrstr.toDartString(), dberr, severity).toString());
+    logger!(Level.error, FreeTDSError(dberrstr.toDartString(), severity).toString());
     _handleError(dbproc, severity, dberr, oserr, dberrstr, oserrstr);
     return EXIT;
   }
@@ -318,6 +332,9 @@ class FreeTDS {
     _executing = true;
     try {
       _library.dbsettime(timeout);
+      if (lastError != null) {
+        throw FreeTDSException.fromFreeTDSError(lastError!);
+      }
 
       Pointer<TDSQUERYPARAM> queryParams = nullptr,
           lastQueryParam = nullptr;
@@ -360,10 +377,17 @@ class FreeTDS {
       if (_returnCode == FAIL) {
         throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.executeCmdError);
       }
+      if (lastError != null) {
+        throw FreeTDSException.fromFreeTDSError(lastError!);
+      }
 
       List<FreeTDSExecutionResultTable> tables = [];
 
       while ((_returnCode = _library.dbresults(_connection)) != NO_MORE_RESULTS) {
+        if (lastError != null) {
+          throw FreeTDSException.fromFreeTDSError(lastError!);
+        }
+
         FreeTDSExecutionResultTable table = FreeTDSExecutionResultTable();
         tables.add(table);
 
@@ -386,6 +410,10 @@ class FreeTDS {
         Pointer<SQL_COLUMN> column;
         int rowCode;
 
+        if (lastError != null) {
+          throw FreeTDSException.fromFreeTDSError(lastError!);
+        }
+
         for (int columnIndex = 0; columnIndex < _numColumns; columnIndex++) {
           int c = columnIndex + 1;
           column = _columns.elementAt(columnIndex);
@@ -403,10 +431,14 @@ class FreeTDS {
             logger!(
                 Level.trace,
                 "TYPE > Column $columnName, type: ${column.ref.type} (${Connection.getColumnTypeName(column.ref.type)}),"
-                    " bindType: $bindType (${Connection.getColumnBindName(bindType)}), info: ${json.encode(SQL_COLUMN_Dart.fromNative(column.ref))}");
+                " bindType: $bindType (${Connection.getColumnBindName(bindType)}), info: ${json.encode(SQLColumn.fromNative(column.ref))}");
           }
 
           Connection.bind(_library, _connection, column, c, bindType);
+
+          if (lastError != null) {
+            throw FreeTDSException.fromFreeTDSError(lastError!);
+          }
         }
         while ((rowCode = _library.dbnextrow(_connection)) != NO_MORE_ROWS) {
           switch (rowCode) {
@@ -418,10 +450,14 @@ class FreeTDS {
                 dynamic value;
                 if (column.ref.status.value != -1) {
                   if (loggerLevel.value >= Level.trace.value && logger != null) {
-                    logger!(Level.trace, "DATA > Column $columnName, info: ${json.encode(SQL_COLUMN_Dart.fromNative(column.ref))}");
+                    logger!(Level.trace, "DATA > Column $columnName, info: ${json.encode(SQLColumn.fromNative(column.ref))}");
                   }
 
                   value = Connection.getData(_library, _connection, column);
+
+                  if (lastError != null) {
+                    throw FreeTDSException.fromFreeTDSError(lastError!);
+                  }
 
                   if (loggerLevel.value >= Level.trace.value && logger != null) {
                     logger!(Level.trace, "DATA > Column $columnName, ${value != null ? "value: $value" : "value IS NULL"}");
@@ -440,6 +476,10 @@ class FreeTDS {
         }
 
         _cleanupAfterTable();
+      }
+
+      if (lastError != null) {
+        throw FreeTDSException.fromFreeTDSError(lastError!);
       }
 
       _executing = false;

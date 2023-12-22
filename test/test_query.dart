@@ -108,7 +108,6 @@ Future<void> main() async {
     expect(result.last.affectedRows, equals(-1));
 
     var insertId = result.last.data[0].values.first;
-    print("Inserted row id=$insertId");
 
     expect(insertId, equals(1));
     expect(FreeTDS.lastError, isNull);
@@ -162,7 +161,6 @@ Future<void> main() async {
     expect(result.last.affectedRows, equals(-1));
 
     var insertId = result.last.data[0].values.first;
-    print("Inserted row id=$insertId");
 
     expect(insertId, equals(1));
 
@@ -237,7 +235,6 @@ Future<void> main() async {
     expect(result.last.affectedRows, equals(-1));
 
     var insertId = result.last.data[0].values.first;
-    print("Inserted row id=$insertId");
 
     expect(insertId, equals(1));
 

@@ -8,7 +8,12 @@ import 'package:freetds/src/constants.dart';
 import 'package:freetds/src/error/freetds_error_message.dart';
 import 'package:freetds/src/error/freetds_exception.dart';
 import 'package:freetds/src/freetds.dart';
-import 'package:freetds/src/library.dart';
+import 'package:freetds/src/library/library.dart';
+import 'package:freetds/src/library/model/native/db_date_rec.dart';
+import 'package:freetds/src/library/model/native/db_date_rec_2.dart';
+import 'package:freetds/src/library/model/native/db_money_4.dart';
+import 'package:freetds/src/library/model/native/db_process.dart';
+import 'package:freetds/src/library/model/native/sql_column.dart';
 import 'package:freetds/src/utils/date_utils.dart';
 
 class Connection {
@@ -79,7 +84,7 @@ class Connection {
     }
   }
 
-  static void bind(FreeTDS_library library, Pointer<DBPROCESS> connection, Pointer<SQL_COLUMN> column, int columnNumber, int bindType) {
+  static void bind(Library library, Pointer<DBPROCESS> connection, Pointer<SQL_COLUMN> column, int columnNumber, int bindType) {
     column.ref.data = calloc<Uint8>(column.ref.size);
     if (column.ref.data == nullptr) {
       throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.outOfMemoryError);
@@ -101,7 +106,7 @@ class Connection {
     }
   }
 
-  static dynamic getData(FreeTDS_library library, Pointer<DBPROCESS> connection, Pointer<SQL_COLUMN> column) {
+  static dynamic getData(Library library, Pointer<DBPROCESS> connection, Pointer<SQL_COLUMN> column) {
     switch (column.ref.type) {
       case SYBBIT:
         return column.ref.data.cast<Uint8>().value == 1 ? true : false;
@@ -166,20 +171,6 @@ class Connection {
           throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.outOfMemoryError);
         }
         library.dbanydatecrack(connection, _value, column.ref.type, column.ref.data);
-        print({
-          "dateyear": _value.ref.dateyear,
-          "quarter": _value.ref.quarter,
-          "datemonth": _value.ref.datemonth,
-          "datedmonth": _value.ref.datedmonth,
-          "datedyear": _value.ref.datedyear,
-          "week": _value.ref.week,
-          "datedweek": _value.ref.datedweek,
-          "datehour": _value.ref.datehour,
-          "dateminute": _value.ref.dateminute,
-          "datesecond": _value.ref.datesecond,
-          "datensecond": _value.ref.datensecond,
-          "datetzone": _value.ref.datetzone,
-        });
         final dateTime = DateUtils.dateWithYear(
           _value.ref.dateyear,
           _value.ref.datemonth + 1,

@@ -4,6 +4,7 @@ import "dart:typed_data";
 import "package:ffi/ffi.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:freetds/freetds.dart";
+import "package:freetds/src/library/model/model.dart";
 import "package:freetds/src/utils/connection_utils.dart";
 import "package:tempo/tempo.dart";
 

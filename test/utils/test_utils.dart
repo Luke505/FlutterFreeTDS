@@ -4,6 +4,8 @@ import "dart:io";
 import "package:ffi/ffi.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:freetds/freetds.dart";
+import "package:freetds/src/library/model/functions.dart";
+import "package:freetds/src/library/model/model.dart";
 import "package:logger/logger.dart";
 
 class TestUtils {
