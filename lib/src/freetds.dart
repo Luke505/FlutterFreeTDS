@@ -20,13 +20,13 @@ import 'package:freetds/src/utils/connection_utils.dart';
 import 'package:logger/logger.dart';
 import 'package:queue/queue.dart' show Queue;
 
+import 'communication/freetds_message.dart';
+
 class FreeTDS {
   static const int defaultTimeout = 5;
-  static const String defaultCharset = "UTF-8";
   static const int defaultMaxTextSize = 4096;
 
   int timeout = defaultTimeout;
-  String charset = defaultCharset;
   int maxTextSize = defaultMaxTextSize;
 
   Pointer<LOGINREC> _login = nullptr;
@@ -42,11 +42,13 @@ class FreeTDS {
 
   static Queue? _queue;
   static FreeTDS? _instance;
+
   late Library _library;
 
   static FreeTDSError? lastError;
+
   static StreamController<FreeTDSError>? errorStream;
-  //StreamController<FreeTDSMessage> messageStream = StreamController.broadcast();
+  static StreamController<FreeTDSMessage>? messageStream;
 
   static FreeTDS get instance => _instance ??= FreeTDS._internal();
 
@@ -64,11 +66,12 @@ class FreeTDS {
     lastError = null;
     setQueue(true);
     setErrorStream(false);
+    setMessageStream(false);
     _library.dbmsghandle(Pointer.fromFunction<mhandlefunc_Native>(_handleMessage, TDS_SUCCESS));
     _library.dberrhandle(Pointer.fromFunction<ehandlefunc_Native>(_handleError, CANCEL));
   }
 
-  FreeTDS._test(String libraryPath, bool queue, bool onErrorCrash) {
+  FreeTDS._test(String libraryPath, bool queue) {
     if (Platform.isMacOS || Platform.isIOS || Platform.isWindows) {
       _library = Library.test(libraryPath);
     } else {
@@ -82,26 +85,16 @@ class FreeTDS {
     lastError = null;
     setQueue(queue);
     setErrorStream(true);
+    setMessageStream(true);
 
-    if (!onErrorCrash) {
-      _library.dbmsghandle(Pointer.fromFunction<mhandlefunc_Native>(_handleMessage, TDS_SUCCESS));
-      _library.dberrhandle(Pointer.fromFunction<ehandlefunc_Native>(_handleError, CANCEL));
-    } else {
-      _library.dbmsghandle(Pointer.fromFunction<mhandlefunc_Native>(_handleMessage, TDS_SUCCESS));
-      _library.dberrhandle(Pointer.fromFunction<ehandlefunc_Native>(_handleErrorAndCrash, EXIT));
-    }
+    _library.dbmsghandle(Pointer.fromFunction<mhandlefunc_Native>(_handleMessage, TDS_SUCCESS));
+    _library.dberrhandle(Pointer.fromFunction<ehandlefunc_Native>(_handleError, CANCEL));
   }
 
   @visibleForTesting
-  static Library initTest(String libraryPath, bool queue, bool onErrorCrash, Logger logger) {
-    _instance = FreeTDS._test(libraryPath, queue, onErrorCrash);
-
-    FreeTDS.logger = (Level level, String msg) => logger.log(level, msg);
-    errorStream!.stream.listen((event) {
-      logger.e(event);
-    });
-
-    return instance._library;
+  static FreeTDS initTest(String libraryPath, bool queue) {
+    _instance = FreeTDS._test(libraryPath, queue);
+    return _instance!;
   }
 
   @visibleForTesting
@@ -151,6 +144,21 @@ class FreeTDS {
     }
   }
 
+  static Future<void> setMessageStream(bool enable) async {
+    if (enable) {
+      if (messageStream == null) {
+        messageStream = StreamController.broadcast();
+      }
+    } else if (messageStream != null) {
+      try {
+        if (!messageStream!.isClosed) {
+          await messageStream!.close();
+        }
+      } catch (_) {}
+      messageStream = null;
+    }
+  }
+
   bool isConnected() {
     return _library.dbdead(_connection) == 0;
   }
@@ -159,23 +167,18 @@ class FreeTDS {
     return _executing;
   }
 
-  // ignore: unused_element
-  void _dealloc() {
-    lastError = null;
-    _library.dbexit();
-  }
-
   // region Handler
 
   // Handles message callback from FreeTDS library.
-  static int _handleMessage(Pointer<DBPROCESS> dbproc, int msgno, int msgstate, int severity, Pointer<Utf8> msgtext, Pointer<Utf8> srvname,
-      Pointer<Utf8> procname, int line) {
+  static int _handleMessage(Pointer<DBPROCESS> dbproc, int msgno, int msgstate, int severity, Pointer<Utf8> msgtext, Pointer<Utf8> srvname, Pointer<Utf8> procname, int line) {
     try {
       if (severity > 10) {
         var error = FreeTDSError(msgtext.toDartString(), severity);
-        lastError = error;
-        if (errorStream != null && !errorStream!.isClosed) {
-          errorStream!.add(error);
+        _storeError(error);
+      } else {
+        if (messageStream != null && !messageStream!.isClosed) {
+          var message = FreeTDSMessage(msgtext.toDartString(), severity);
+          messageStream!.add(message);
         }
       }
     } catch (_) {}
@@ -189,19 +192,17 @@ class FreeTDS {
 
     try {
       var error = FreeTDSError(dberrstr.toDartString(), severity);
-      lastError = error;
-      if (errorStream != null && !errorStream!.isClosed) {
-        errorStream!.add(error);
-      }
+      _storeError(error);
     } catch (_) {}
 
     return CANCEL;
   }
 
-  static int _handleErrorAndCrash(Pointer<DBPROCESS> dbproc, int severity, int dberr, int oserr, Pointer<Utf8> dberrstr, Pointer<Utf8> oserrstr) {
-    logger!(Level.error, FreeTDSError(dberrstr.toDartString(), severity).toString());
-    _handleError(dbproc, severity, dberr, oserr, dberrstr, oserrstr);
-    return EXIT;
+  static void _storeError(FreeTDSError error) {
+    lastError = error;
+    if (errorStream != null && !errorStream!.isClosed) {
+      errorStream!.add(error);
+    }
   }
 
   // endregion
@@ -212,16 +213,20 @@ class FreeTDS {
     if (_columns != nullptr) {
       Pointer<SQL_COLUMN> column;
       for (int i = 0; i < _numColumns; i++) {
-        column = _columns.elementAt(i);
-        if (column != nullptr) {
-          if (column.ref.data != nullptr) {
-            calloc.free(column.ref.data);
-            column.ref.data = nullptr;
+        try {
+          column = _columns.elementAt(i);
+          if (column != nullptr) {
+            if (column.ref.data != nullptr) {
+              calloc.free(column.ref.data);
+              column.ref.data = nullptr;
+            }
+            if (column.ref.status != nullptr) {
+              calloc.free(column.ref.status);
+              column.ref.status = nullptr;
+            }
           }
-          if (column.ref.status != nullptr) {
-            calloc.free(column.ref.status);
-            column.ref.status = nullptr;
-          }
+        } catch (_) {
+          break;
         }
       }
       calloc.free(_columns);
@@ -232,14 +237,18 @@ class FreeTDS {
   void _cleanupAfterExecution() {
     _cleanupAfterTable();
     if (_connection != nullptr) {
-      _library.dbfreebuf(_connection);
+      try {
+        _library.dbfreebuf(_connection);
+      } catch (_) {}
     }
   }
 
   void _cleanupAfterConnection() {
     _cleanupAfterExecution();
     if (_login != nullptr) {
-      _library.dbloginfree(_login);
+      try {
+        _library.dbloginfree(_login);
+      } catch (_) {}
       _login = nullptr;
     }
   }
@@ -262,7 +271,15 @@ class FreeTDS {
     }
   }
 
-  Future<void> _connect({required String host, required String username, required String password, String? database, SYBEncryptionLevel? encryption}) async {
+  Future<void> _connect(
+      {required String host,
+      required String username,
+      required String password,
+      String? database,
+      SYBEncryptionLevel? encryption,
+      String? charset = "UTF-8",
+      String? lang,
+      int? version = DBVERSION_100}) async {
     lastError = null;
 
     if (isConnected()) {
@@ -271,24 +288,47 @@ class FreeTDS {
 
     _login = _library.dblogin();
     if (_login == nullptr) {
+      _cleanupAfterConnection();
       throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
     }
 
     if (_library.dbsetlname(_login, host.toNativeUtf8(), DBSETHOST) == 0) {
+      _cleanupAfterConnection();
       throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
     }
     if (_library.dbsetlname(_login, username.toNativeUtf8(), DBSETUSER) == 0) {
+      _cleanupAfterConnection();
       throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
     }
     if (_library.dbsetlname(_login, password.toNativeUtf8(), DBSETPWD) == 0) {
-      throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
-    }
-    if (_library.dbsetlname(_login, charset.toNativeUtf8(), DBSETCHARSET) == 0) {
+      _cleanupAfterConnection();
       throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
     }
 
     if (encryption != null) {
       if (_library.dbsetlname(_login, encryption.value.toNativeUtf8(), DBSETENCRYPTION) == 0) {
+        _cleanupAfterConnection();
+        throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
+      }
+    }
+
+    if (charset != null) {
+      if (_library.dbsetlname(_login, charset.toNativeUtf8(), DBSETCHARSET) == 0) {
+        _cleanupAfterConnection();
+        throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
+      }
+    }
+
+    if (lang != null) {
+      if (_library.dbsetlname(_login, lang.toNativeUtf8(), DBSETNATLANG) == 0) {
+        _cleanupAfterConnection();
+        throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
+      }
+    }
+
+    if (version != null) {
+      if (_library.dbsetlversion(_login, version) == 0) {
+        _cleanupAfterConnection();
         throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
       }
     }
@@ -297,15 +337,19 @@ class FreeTDS {
 
     _connection = _library.dbopen(_login, host.toNativeUtf8());
     if (_connection == nullptr) {
+      _cleanupAfterConnection();
       throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.connectionError);
     }
 
     if (database != null) {
       _returnCode = _library.dbuse(_connection, database.toNativeUtf8());
       if (_returnCode == FAIL) {
+        _cleanupAfterConnection();
         throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.databaseUseError);
       }
     }
+
+    _cleanupAfterConnection();
   }
 
   Future<List<FreeTDSExecutionResultTable>> query(String sql, [List<QueryParam>? params]) async {
@@ -336,8 +380,7 @@ class FreeTDS {
         throw FreeTDSException.fromFreeTDSError(lastError!);
       }
 
-      Pointer<TDSQUERYPARAM> queryParams = nullptr,
-          lastQueryParam = nullptr;
+      Pointer<TDSQUERYPARAM> queryParams = nullptr, lastQueryParam = nullptr;
 
       if (params != null) {
         for (int i = 0; i < params.length; i++) {
@@ -350,10 +393,10 @@ class FreeTDS {
           queryParam.ref.output = params[i].output;
           queryParam.ref.datatype = params[i].datatype;
           queryParam.ref.maxlen = params[i].maxlen;
-          queryParam.ref.scale = params[i].scale;
-          queryParam.ref.precision = params[i].precision;
+          queryParam.ref.scale = params[i].scale ?? 0;
+          queryParam.ref.precision = params[i].precision ?? 0;
           queryParam.ref.datalen = params[i].datalen;
-          queryParam.ref.value = params[i].value ?? nullptr;
+          queryParam.ref.value = params[i].getValue(_library, _connection) ?? nullptr;
 
           if (lastQueryParam == nullptr) {
             queryParams = queryParam;
@@ -365,7 +408,7 @@ class FreeTDS {
             logger!(
                 Level.trace,
                 "PARAMETER > Column ${params[i].name ?? (i + 1)}, type: ${queryParam.ref.datatype} (${Connection.getColumnTypeName(queryParam.ref.datatype)}),"
-                " datalen: ${queryParam.ref.datalen}, value: ${params[i].value?.asTypedList(queryParam.ref.datalen)}");
+                " datalen: ${queryParam.ref.datalen}, value: ${params[i].getValue(_library, _connection)?.asTypedList(queryParam.ref.datalen)}");
           }
 
           lastQueryParam = queryParam;
@@ -417,7 +460,6 @@ class FreeTDS {
         for (int columnIndex = 0; columnIndex < _numColumns; columnIndex++) {
           int c = columnIndex + 1;
           column = _columns.elementAt(columnIndex);
-
           column.ref.name = _library.dbcolname(_connection, c);
           column.ref.type = _library.dbcoltype(_connection, c);
           column.ref.size = _library.dbcollen(_connection, c);
@@ -482,9 +524,11 @@ class FreeTDS {
         throw FreeTDSException.fromFreeTDSError(lastError!);
       }
 
+      _cleanupAfterExecution();
       _executing = false;
       return tables;
     } catch (_) {
+      _cleanupAfterExecution();
       _executing = false;
       rethrow;
     }

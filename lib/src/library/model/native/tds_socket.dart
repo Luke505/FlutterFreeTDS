@@ -12,7 +12,8 @@ import 'package:freetds/src/library/model/native/tds_param_info.dart';
 import 'package:freetds/src/library/model/native/tds_result_info.dart';
 
 base class TDSSOCKET extends Struct {
-  external Pointer<TDSCONNECTION> conn;
+  @Array(1)
+  external Array<TDSCONNECTION> conn;
   external Pointer parent;
   external Pointer<Uint8> in_buf;
   external Pointer<Uint8> out_buf;

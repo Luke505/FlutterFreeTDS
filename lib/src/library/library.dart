@@ -10,7 +10,7 @@ class Library {
 
   Library() {
     if (Platform.isMacOS || Platform.isIOS) {
-      _library = DynamicLibrary.open('FreeTDSKit.framework/FreeTDSKit');
+      _library = DynamicLibrary.open('FreeTDS.framework/FreeTDS');
       _loadLibraryFunctions();
     } else if (Platform.isWindows) {
       _library = DynamicLibrary.open('sybdb.dll');
@@ -49,6 +49,7 @@ class Library {
   late dbfreebuf_Dart dbfreebuf;
   late dbdead_Dart dbdead;
   late dbsetlname_Dart dbsetlname;
+  late dbsetlversion_Dart dbsetlversion;
   late dblogin_Dart dblogin;
   late dbsetlogintime_Dart dbsetlogintime;
   late dbuse_Dart dbuse;
@@ -56,6 +57,7 @@ class Library {
   late dbresults_Dart dbresults;
   late dbcolname_Dart dbcolname;
   late dbcoltype_Dart dbcoltype;
+  late dbcoltypeinfo_Dart dbcoltypeinfo;
   late dbcollen_Dart dbcollen;
   late dbbind_Dart dbbind;
   late dbanydatecrack_Dart dbanydatecrack;
@@ -91,6 +93,7 @@ class Library {
     dbfreebuf = _library.lookupFunction<dbfreebuf_Native, dbfreebuf_Dart>('dbfreebuf');
     dbdead = _library.lookupFunction<dbdead_Native, dbdead_Dart>('dbdead');
     dbsetlname = _library.lookupFunction<dbsetlname_Native, dbsetlname_Dart>('dbsetlname');
+    dbsetlversion = _library.lookupFunction<dbsetlversion_Native, dbsetlversion_Dart>('dbsetlversion');
     dblogin = _library.lookupFunction<dblogin_Native, dblogin_Dart>('dblogin');
     dbsetlogintime = _library.lookupFunction<dbsetlogintime_Native, dbsetlogintime_Dart>('dbsetlogintime');
     dbuse = _library.lookupFunction<dbuse_Native, dbuse_Dart>('dbuse');
@@ -98,6 +101,7 @@ class Library {
     dbresults = _library.lookupFunction<dbresults_Native, dbresults_Dart>('dbresults');
     dbcolname = _library.lookupFunction<dbcolname_Native, dbcolname_Dart>('dbcolname');
     dbcoltype = _library.lookupFunction<dbcoltype_Native, dbcoltype_Dart>('dbcoltype');
+    dbcoltypeinfo = _library.lookupFunction<dbcoltypeinfo_Native, dbcoltypeinfo_Dart>('dbcoltypeinfo');
     dbcollen = _library.lookupFunction<dbcollen_Native, dbcollen_Dart>('dbcollen');
     dbbind = _library.lookupFunction<dbbind_Native, dbbind_Dart>('dbbind');
     dbanydatecrack = _library.lookupFunction<dbanydatecrack_Native, dbanydatecrack_Dart>('dbanydatecrack');

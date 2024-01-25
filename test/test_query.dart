@@ -51,7 +51,7 @@ Future<void> main() async {
     expect(FreeTDS.lastError, isNull);
   });
 
-  test('Test SQL CREATE error', () async {
+  test('Test SQL error', () async {
     await freetds.connect(
       host: TestUtils.host,
       username: TestUtils.username,
@@ -61,12 +61,12 @@ Future<void> main() async {
     );
     expect(FreeTDS.lastError, isNull);
 
-    // Create a table
-    try {
-      await freetds.query("CREATE TABLE #test_freetds();");
-    } catch (_) {}
-
+    expect(() async => await freetds.query("CREATE TABLE #test_freetds ( ... );"), throwsA(isA<FreeTDSException>()));
     expect(FreeTDS.lastError, isNotNull);
+
+    FreeTDS.lastError = null;
+    await freetds.disconnect();
+    expect(FreeTDS.lastError, isNull);
   });
 
   test('Test SQL INSERT', () async {
@@ -174,7 +174,7 @@ Future<void> main() async {
     expect(results.last.data[0]["id"], equals(1));
     expect(results.last.data[0]["name"], equals("Bob"));
     expect(results.last.data[0]["email"], equals("bob@bob.com"));
-    expect(results.last.data[0]["creationTime"], equals(OffsetDateTime.parse("2000-01-01 23:59:59+0000")));
+    expect(results.last.data[0]["creationTime"], equals(LocalDateTime.parse("2000-01-01T23:59:59")));
     expect(FreeTDS.lastError, isNull);
 
     // Drop the test table
@@ -212,7 +212,7 @@ Future<void> main() async {
     expect(creationStartDateResult.last.data[0].values.length, equals(1));
     expect(creationStartDateResult.last.affectedRows, equals(-1));
 
-    var creationStartDate = creationStartDateResult.last.data[0].values.first as OffsetDateTime;
+    var creationStartDate = creationStartDateResult.last.data[0].values.first as LocalDateTime;
 
     sleep(Duration(milliseconds: 50));
 
@@ -246,7 +246,7 @@ Future<void> main() async {
     expect(creationEndDateResult.last.data[0].values.length, equals(1));
     expect(creationEndDateResult.last.affectedRows, equals(-1));
 
-    var creationEndDate = creationEndDateResult.last.data[0].values.first as OffsetDateTime;
+    var creationEndDate = creationEndDateResult.last.data[0].values.first as LocalDateTime;
 
     expect(creationStartDate.timespanUntil(creationEndDate).inMilliseconds, greaterThanOrEqualTo(100));
 

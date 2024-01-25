@@ -22,6 +22,8 @@ const DBCMDNONE = 0;
 const DBCMDPEND = 1;
 const DBCMDSENT = 2;
 
+const MAXPRECISION = 77;
+
 /*
 UNMANAGED:
 
@@ -282,6 +284,7 @@ const TDS_TOKEN_TRAILING = 141354;
 const int DBSETHOST = 1;
 const int DBSETUSER = 2;
 const int DBSETPWD = 3;
+const int DBSETNATLANG = 7;
 const int DBSETCHARSET = 10;
 const int DBSETENCRYPTION = 15;
 

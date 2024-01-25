@@ -1,13 +1,15 @@
 version: '3'
 
 services:
-    sybase:
-        image: sybase:17
-        hostname: sybase
-        container_name: sybase
-        ports:
-            - "2638:2638"
-        volumes:
-            - ./data:/db
-        command:
-            /db/start.sh
+  sybase:
+    image: sybase:17
+    hostname: sybase
+    container_name: sybase
+    environment:
+      - USE_CERT=0
+    ports:
+      - "2638:2638"
+    volumes:
+      - ./data:/db
+    command:
+      /db/start.sh

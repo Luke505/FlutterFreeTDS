@@ -14,7 +14,7 @@ import 'package:freetds/src/library/model/native/tds_packet.dart';
 import 'package:freetds/src/library/model/native/tds_poll_wake_up.dart';
 
 base class TDSCONNECTION extends Struct {
-  @Uint8()
+  @Uint16()
   external int tds_version;
   @Uint32()
   external int product_version;

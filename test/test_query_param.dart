@@ -1,5 +1,4 @@
 import 'dart:ffi';
-import "dart:typed_data";
 
 import "package:ffi/ffi.dart";
 import "package:flutter_test/flutter_test.dart";
@@ -57,7 +56,7 @@ Future<void> main() async {
       IntQueryParamTestModel(
         name: "SYBUINT1_MIN",
         value: BigInt.parse("0"),
-        datatype: SYBUINT1,
+        datatype: SYBINT1,
         datalen: 1,
         endValue: [0x00],
         endDatatype: SYBINT1,
@@ -201,7 +200,7 @@ Future<void> main() async {
       IntQueryParamTestModel(
         name: "SYBUINT1_0",
         value: BigInt.parse("0"),
-        datatype: SYBUINT1,
+        datatype: SYBINT1,
         datalen: 1,
         endValue: [0x00],
         endDatatype: SYBINT1,
@@ -345,10 +344,10 @@ Future<void> main() async {
       IntQueryParamTestModel(
         name: "SYBUINT1_MAX",
         value: BigInt.parse("255"),
-        datatype: SYBUINT1,
+        datatype: SYBINT1,
         datalen: 1,
         endValue: [0xFF],
-        endDatatype: SYBUINT1,
+        endDatatype: SYBINT1,
         dartValue: 255,
       ),
       IntQueryParamTestModel(
@@ -458,8 +457,17 @@ Future<void> main() async {
   });
 
   test('Test BigInt QueryParam', () async {
+    // Open a connection (test_db should already exist)
+    await freetds.connect(
+      host: TestUtils.host,
+      username: TestUtils.username,
+      password: TestUtils.password,
+      database: TestUtils.database,
+      encryption: TestUtils.encryption,
+    );
+
     for (int i = 0; i < elements.length; i++) {
-      var element = elements[i] as dynamic;
+      var element = elements[i];
       QueryParam v = QueryParam(element.value, datatype: element.datatype);
       expect(v.name, isNull, reason: "Invalid name for element: ${element.name}");
       expect(v.output, 0, reason: "Invalid output for element: ${element.name}");
@@ -467,10 +475,10 @@ Future<void> main() async {
           reason: "Invalid datatype for element: ${element.name}"
               " (Expected: ${Connection.getColumnTypeName(element.endDatatype)}, Actual: ${Connection.getColumnTypeName(v.datatype)})");
       expect(v.maxlen, 0, reason: "Invalid maxlen for element: ${element.name}");
-      expect(v.scale, 0, reason: "Invalid scale for element: ${element.name}");
-      expect(v.precision, 0, reason: "Invalid precision for element: ${element.name}");
+      expect(v.scale, null, reason: "Invalid scale for element: ${element.name}");
+      expect(v.precision, null, reason: "Invalid precision for element: ${element.name}");
       expect(v.datalen, element.datalen, reason: "Invalid datalen for element: ${element.name}");
-      expect(v.value!.asTypedList(v.datalen), element.endValue, reason: "Invalid value for element: ${element.name}");
+      expect(v.getValue(freetds.library, freetds.connection)!.asTypedList(v.datalen), element.endValue, reason: "Invalid value for element: ${element.name}");
     }
   });
 
@@ -513,26 +521,22 @@ Future<void> main() async {
 
     // Create a table
     await freetds.query("""
-    CREATE TABLE #test_freetds
+    CREATE TABLE #text_test_freetds
     (
       SYBCHAR char(255),
       SYBVARCHAR varchar(255),
-      SYBNVARCHAR nvarchar(255),
       SYBTEXT text,
-      SYBNTEXT ntext,
     );
     """);
 
     // Insert some data
     var insertResult = await freetds.query(
-      "INSERT INTO #test_freetds (SYBCHAR, SYBVARCHAR, SYBNVARCHAR, SYBTEXT, SYBNTEXT)"
-      " VALUES (:SYBCHAR, :SYBVARCHAR, :SYBNVARCHAR, :SYBTEXT, :SYBNTEXT)",
+      "INSERT INTO #text_test_freetds (SYBCHAR, SYBVARCHAR, SYBTEXT)"
+      " VALUES (:SYBCHAR, :SYBVARCHAR, :SYBTEXT)",
       [
         QueryParam(name: "SYBCHAR", "test of a character field"),
         QueryParam(name: "SYBVARCHAR", "test of a character field"),
-        QueryParam(name: "SYBNVARCHAR", "test of a character field"),
         QueryParam(name: "SYBTEXT", "test of a character field"),
-        QueryParam(name: "SYBNTEXT", "test of a character field"),
       ],
     );
     expect(insertResult.length, equals(1));
@@ -540,21 +544,19 @@ Future<void> main() async {
     expect(insertResult.last.affectedRows, equals(1));
 
     // Query the database using a parameterized query
-    var results = await freetds.query("SELECT * FROM #test_freetds");
+    var results = await freetds.query("SELECT * FROM #text_test_freetds");
     expect(results.length, equals(1));
     expect(results.last.data.length, equals(1));
-    expect(results.last.data[0].values.length, equals(7));
+    expect(results.last.data[0].values.length, equals(3));
     expect(results.last.affectedRows, equals(-1));
 
     expect(results.last.data[0]["SYBCHAR"], equals("test of a character field"));
     expect(results.last.data[0]["SYBVARCHAR"], equals("test of a character field"));
-    expect(results.last.data[0]["SYBNVARCHAR"], equals("test of a character field"));
     expect(results.last.data[0]["SYBTEXT"], equals("test of a character field"));
-    expect(results.last.data[0]["SYBNTEXT"], equals("test of a character field"));
     expect(FreeTDS.lastError, isNull);
 
     // Drop the test table
-    await freetds.query("DROP TABLE #test_freetds");
+    await freetds.query("DROP TABLE #text_test_freetds");
     expect(FreeTDS.lastError, isNull);
 
     // Finally, close the connection
@@ -573,28 +575,26 @@ Future<void> main() async {
 
     // Create a table
     await freetds.query("""
-    CREATE TABLE #test_freetds
+    CREATE TABLE #date_test_freetds
     (
-      SYBDATETIME datetime,
-      SYBDATETIME4 smalldatetime,
-      SYBMSDATE date,
-      SYBDATE date,
-      SYBTIME time,
-      SYBMSTIME time,
+      SYBMSDATETIMEOFFSET datetimeoffset NULL,
+      SYBDATETIME datetime NULL,
+      SYBDATETIME4 smalldatetime NULL,
+      SYBDATE date NULL,
+      SYBTIME time NULL
     );
     """);
 
     // Insert some data
     var insertResult = await freetds.query(
-      "INSERT INTO #test_freetds (SYBDATETIME, SYBDATETIME4, SYBMSDATE, SYBDATE, SYBTIME, SYBMSTIME)"
-      " VALUES (:SYBDATETIME, :SYBDATETIME4, :SYBMSDATE, :SYBDATE, :SYBTIME, :SYBMSTIME)",
+      "INSERT INTO #date_test_freetds (SYBMSDATETIMEOFFSET, SYBDATETIME, SYBDATETIME4, SYBDATE, SYBTIME)"
+      " VALUES (:SYBMSDATETIMEOFFSET, :SYBDATETIME, :SYBDATETIME4, :SYBDATE, :SYBTIME)",
       [
-        QueryParam(name: "SYBDATETIME", "2015-09-12 21:48:12.638161"),
-        QueryParam(name: "SYBDATETIME4", "2015-09-12 21:48:12.638161"),
-        QueryParam(name: "SYBMSDATE", "2012-11-27"),
-        QueryParam(name: "SYBDATE", "2012-11-27"),
-        QueryParam(name: "SYBTIME", "15:27:12"),
-        QueryParam(name: "SYBMSTIME", "15:27:12.327862"),
+        QueryParam(name: "SYBMSDATETIMEOFFSET", OffsetDateTime(ZoneOffset.fromDuration(Duration(hours: -5)), 2024, 1, 2, 16, 35, 5, 123456789)),
+        QueryParam(name: "SYBDATETIME", LocalDateTime.parse("2024-01-02T16:35:05.123456789")),
+        QueryParam(name: "SYBDATETIME4", LocalDateTime.parse("2024-01-02T16:35:05.123456789")),
+        QueryParam(name: "SYBDATE", LocalDate.parse("2024-01-02")),
+        QueryParam(name: "SYBTIME", LocalTime.parse("16:35:05.123456789")),
       ],
     );
     expect(insertResult.length, equals(1));
@@ -602,22 +602,21 @@ Future<void> main() async {
     expect(insertResult.last.affectedRows, equals(1));
 
     // Query the database using a parameterized query
-    var results = await freetds.query("SELECT * FROM #test_freetds");
+    var results = await freetds.query("SELECT * FROM #date_test_freetds");
     expect(results.length, equals(1));
     expect(results.last.data.length, equals(1));
-    expect(results.last.data[0].values.length, equals(10));
+    expect(results.last.data[0].values.length, equals(5));
     expect(results.last.affectedRows, equals(-1));
 
-    expect(results.last.data[0]["SYBDATETIME"], equals(OffsetDateTime.parse("Apr 12, 1985 17:49:41")));
-    expect(results.last.data[0]["SYBDATETIME4"], equals(OffsetDateTime.parse("Apr 12, 1985 17:49:41")));
-    expect(results.last.data[0]["SYBMSDATE"], equals(OffsetDateTime.parse("2012-11-27")));
-    expect(results.last.data[0]["SYBDATE"], equals(OffsetDateTime.parse("2012-11-27")));
-    expect(results.last.data[0]["SYBTIME"], equals(OffsetDateTime.parse("15:27:12")));
-    expect(results.last.data[0]["SYBMSTIME"], equals(OffsetDateTime.parse("15:27:12.327862")));
+    expect(results.last.data[0]["SYBMSDATETIMEOFFSET"], equals("2024-01-02 16:35:05.123-05:00"));
+    expect(results.last.data[0]["SYBDATETIME"], equals(LocalDateTime.parse("2024-01-02T16:35:05.123456")));
+    expect(results.last.data[0]["SYBDATETIME4"], equals(LocalDateTime.parse("2024-01-02T16:35:00")));
+    expect(results.last.data[0]["SYBDATE"], equals(LocalDate.parse("2024-01-02")));
+    expect(results.last.data[0]["SYBTIME"], equals(LocalTime.parse("16:35:05.123456")));
     expect(FreeTDS.lastError, isNull);
 
     // Drop the test table
-    await freetds.query("DROP TABLE #test_freetds");
+    await freetds.query("DROP TABLE #date_test_freetds");
     expect(FreeTDS.lastError, isNull);
 
     // Finally, close the connection
@@ -636,23 +635,22 @@ Future<void> main() async {
 
     // Create a table
     await freetds.query("""
-    CREATE TABLE #test_freetds
+    CREATE TABLE #binary_test_freetds
     (
-      SYBBIT bit,
-      SYBIMAGE image,
-      SYBBINARY_BINARY binary,
+      SYBBIT_0 bit,
+      SYBBIT_1 bit,
       SYBBINARY_TIMESTAMP timestamp,
     );
     """);
 
     // Insert some data
     var insertResult = await freetds.query(
-      "INSERT INTO #test_freetds (SYBBIT, SYBBINARY, SYBIMAGE) VALUES (:SYBBIT, :SYBBINARY, :SYBIMAGE)",
+      "INSERT INTO #binary_test_freetds (SYBBIT_0, SYBBIT_1, SYBBINARY_TIMESTAMP)"
+      " VALUES (:SYBBIT_0, :SYBBIT_1, :SYBBINARY_TIMESTAMP)",
       [
-        QueryParam(name: "SYBBIT", Uint8List.fromList([1]), datatype: SYBBIT),
-        QueryParam(name: "SYBIMAGE", Uint8List.fromList([1]), datatype: SYBIMAGE),
-        QueryParam(name: "SYBBINARY_BINARY", Uint8List.fromList([1]), datatype: SYBBINARY),
-        QueryParam(name: "SYBBINARY_TIMESTAMP", "2023-01-01 23:59:59"),
+        QueryParam(name: "SYBBIT_0", false, datatype: SYBBIT),
+        QueryParam(name: "SYBBIT_1", true, datatype: SYBBIT),
+        QueryParam(name: "SYBBINARY_TIMESTAMP", "2000-01-01 23:59:59"),
       ],
     );
     expect(insertResult.length, equals(1));
@@ -660,20 +658,19 @@ Future<void> main() async {
     expect(insertResult.last.affectedRows, equals(1));
 
     // Query the database using a parameterized query
-    var results = await freetds.query("SELECT * FROM #test_freetds");
+    var results = await freetds.query("SELECT * FROM #binary_test_freetds");
     expect(results.length, equals(1));
     expect(results.last.data.length, equals(1));
-    expect(results.last.data[0].values.length, equals(4));
+    expect(results.last.data[0].values.length, equals(3));
     expect(results.last.affectedRows, equals(-1));
 
-    expect(results.last.data[0]["SYBBIT"], equals(1));
-    expect(results.last.data[0]["SYBIMAGE"], equals(1));
-    expect(results.last.data[0]["SYBBINARY_BINARY"], equals(1));
-    expect(results.last.data[0]["SYBBINARY_TIMESTAMP"], equals(OffsetDateTime.parse("2023-01-01 23:59:59")));
+    expect(results.last.data[0]["SYBBIT_0"], equals(false));
+    expect(results.last.data[0]["SYBBIT_1"], equals(true));
+    expect(results.last.data[0]["SYBBINARY_TIMESTAMP"], equals(LocalDateTime.parse("2000-01-01T23:59:59")));
     expect(FreeTDS.lastError, isNull);
 
     // Drop the test table
-    await freetds.query("DROP TABLE #test_freetds");
+    await freetds.query("DROP TABLE #binary_test_freetds");
     expect(FreeTDS.lastError, isNull);
 
     // Finally, close the connection
@@ -692,7 +689,7 @@ Future<void> main() async {
 
     // Create a table
     await freetds.query("""
-    CREATE TABLE #test_freetds
+    CREATE TABLE #number_test_freetds
     (
         SYBINT1 tinyint,
         SYBINT2 smallint,
@@ -710,29 +707,32 @@ Future<void> main() async {
         SYBUINT8 unsigned bigint,
         SYBINT8_N bigint,
         SYBUINT8_N unsigned bigint,
-        SYBFLT8_FLOAT float(8,2),
-        SYBFLT8_DOUBLE double(8,2),
-        SYBREAL real(8,2),
-        SYBMONEY money(8,2),
-        SYBMONEY4 smallmoney(8,2),
+        SYBFLT8_FLOAT4 float(9),
+        SYBFLT8_FLOAT8 float(30),
+        SYBFLT8_DOUBLE double,
+        SYBREAL real,
+        SYBMONEY money,
+        SYBMONEY4 smallmoney,
         SYBNUMERIC numeric(8,2),
+        SYBNUMERIC15 numeric(15,9),
         SYBDECIMAL decimal(8,2),
+        SYBDECIMAL15 decimal(15,9),
     );
     """);
 
     // Insert some data
     var insertResult = await freetds.query(
-      "INSERT INTO #test_freetds (SYBINT1, SYBINT2, SYBINT4, SYBUINT1, SYBUINT2, SYBUINT4, SYBINT1_N, SYBINT2_N, SYBINT4_N, SYBUINT1_N,"
-      " SYBUINT2_N, SYBUINT4_N, SYBINT8, SYBUINT8, SYBINT8_N, SYBUINT8_N, SYBFLT8_FLOAT, SYBFLT8_DOUBLE, SYBREAL, SYBMONEY, SYBMONEY4,"
-      " SYBNUMERIC, SYBDECIMAL)"
+      "INSERT INTO #number_test_freetds (SYBINT1, SYBINT2, SYBINT4, SYBUINT1, SYBUINT2, SYBUINT4, SYBINT1_N, SYBINT2_N, SYBINT4_N, SYBUINT1_N,"
+      " SYBUINT2_N, SYBUINT4_N, SYBINT8, SYBUINT8, SYBINT8_N, SYBUINT8_N, SYBFLT8_FLOAT4, SYBFLT8_FLOAT8, SYBFLT8_DOUBLE, SYBREAL, SYBMONEY, SYBMONEY4,"
+      " SYBNUMERIC, SYBNUMERIC15, SYBDECIMAL, SYBDECIMAL15)"
       " VALUES (:SYBINT1, :SYBINT2, :SYBINT4, :SYBUINT1, :SYBUINT2, :SYBUINT4, :SYBINT1_N, :SYBINT2_N, :SYBINT4_N, :SYBUINT1_N,"
-      " :SYBUINT2_N, :SYBUINT4_N, :SYBINT8, :SYBUINT8, :SYBINT8_N, :SYBUINT8_N, :SYBFLT8_FLOAT, :SYBFLT8_DOUBLE, :SYBREAL, :SYBMONEY,"
-      " :SYBMONEY4, :SYBNUMERIC, :SYBDECIMAL)",
+      " :SYBUINT2_N, :SYBUINT4_N, :SYBINT8, :SYBUINT8, :SYBINT8_N, :SYBUINT8_N, :SYBFLT8_FLOAT4, :SYBFLT8_FLOAT8, :SYBFLT8_DOUBLE, :SYBREAL, :SYBMONEY,"
+      " :SYBMONEY4, :SYBNUMERIC, :SYBNUMERIC15, :SYBDECIMAL, :SYBDECIMAL15)",
       [
         QueryParam(name: "SYBINT1", 255, datatype: SYBINT1),
         QueryParam(name: "SYBINT2", 255, datatype: SYBINT2),
         QueryParam(name: "SYBINT4", 255, datatype: SYBINT4),
-        QueryParam(name: "SYBUINT1", 255, datatype: SYBUINT1),
+        QueryParam(name: "SYBUINT1", 255, datatype: SYBINT1),
         QueryParam(name: "SYBUINT2", 255, datatype: SYBUINT2),
         QueryParam(name: "SYBUINT4", 255, datatype: SYBUINT4),
         QueryParam(name: "SYBINT1_N", 255, datatype: SYBINTN),
@@ -745,13 +745,16 @@ Future<void> main() async {
         QueryParam(name: "SYBUINT8", 374632567765, datatype: SYBUINT8),
         QueryParam(name: "SYBINT8_N", 374632567765, datatype: SYBINTN),
         QueryParam(name: "SYBUINT8_N", 374632567765, datatype: SYBUINTN),
-        QueryParam(name: "SYBFLT8_FLOAT", 1237.45, precision: 8, scale: 2, datatype: SYBFLT8),
+        QueryParam(name: "SYBFLT8_FLOAT4", 1.3, precision: 4, scale: 2, datatype: SYBFLT8),
+        QueryParam(name: "SYBFLT8_FLOAT8", 1237.45, precision: 8, scale: 2, datatype: SYBFLT8),
         QueryParam(name: "SYBFLT8_DOUBLE", 1237.45, precision: 8, scale: 2, datatype: SYBFLT8),
         QueryParam(name: "SYBREAL", 1237.45, precision: 8, scale: 2, datatype: SYBREAL),
         QueryParam(name: "SYBMONEY", 1237.45, precision: 8, scale: 2, datatype: SYBMONEY),
         QueryParam(name: "SYBMONEY4", 1237.45, precision: 8, scale: 2, datatype: SYBMONEY4),
         QueryParam(name: "SYBNUMERIC", 947919.25, precision: 8, scale: 2, datatype: SYBNUMERIC),
+        QueryParam(name: "SYBNUMERIC15", 567765.374632567, precision: 15, scale: 9, datatype: SYBNUMERIC),
         QueryParam(name: "SYBDECIMAL", 947919.25, precision: 8, scale: 2, datatype: SYBDECIMAL),
+        QueryParam(name: "SYBDECIMAL15", 567765.374632567, precision: 15, scale: 9, datatype: SYBDECIMAL),
       ],
     );
     expect(insertResult.length, equals(1));
@@ -759,10 +762,10 @@ Future<void> main() async {
     expect(insertResult.last.affectedRows, equals(1));
 
     // Query the database using a parameterized query
-    var results = await freetds.query("SELECT * FROM #test_freetds");
+    var results = await freetds.query("SELECT * FROM #number_test_freetds");
     expect(results.length, equals(1));
     expect(results.last.data.length, equals(1));
-    expect(results.last.data[0].values.length, equals(23));
+    expect(results.last.data[0].values.length, equals(26));
     expect(results.last.affectedRows, equals(-1));
 
     expect(results.last.data[0]["SYBINT1"], equals(255));
@@ -781,17 +784,20 @@ Future<void> main() async {
     expect(results.last.data[0]["SYBUINT8"], equals(374632567765));
     expect(results.last.data[0]["SYBINT8_N"], equals(374632567765));
     expect(results.last.data[0]["SYBUINT8_N"], equals(374632567765));
-    expect(results.last.data[0]["SYBFLT8_FLOAT"], equals(1237.45));
+    expect(results.last.data[0]["SYBFLT8_FLOAT4"], equals(TestUtils.convertDoubleToReal(1.3, freetds)));
+    expect(results.last.data[0]["SYBFLT8_FLOAT8"], equals(1237.45));
     expect(results.last.data[0]["SYBFLT8_DOUBLE"], equals(1237.45));
-    expect(results.last.data[0]["SYBREAL"], equals(1237.45));
+    expect(results.last.data[0]["SYBREAL"], equals(TestUtils.convertDoubleToReal(1237.45, freetds)));
     expect(results.last.data[0]["SYBMONEY"], equals(1237.45));
     expect(results.last.data[0]["SYBMONEY4"], equals(1237.45));
     expect(results.last.data[0]["SYBNUMERIC"], equals(947919.25));
+    expect(results.last.data[0]["SYBNUMERIC15"], equals(567765.374632567));
     expect(results.last.data[0]["SYBDECIMAL"], equals(947919.25));
+    expect(results.last.data[0]["SYBDECIMAL15"], equals(567765.374632567));
     expect(FreeTDS.lastError, isNull);
 
     // Drop the test table
-    await freetds.query("DROP TABLE #test_freetds");
+    await freetds.query("DROP TABLE #number_test_freetds");
     expect(FreeTDS.lastError, isNull);
 
     // Finally, close the connection
@@ -810,7 +816,7 @@ Future<void> main() async {
 
     // Create a table
     await freetds.query("""
-    CREATE TABLE #test_freetds
+    CREATE TABLE #null_test_freetds
     (
         SYBNULL INTEGER NULL,
     );
@@ -818,7 +824,7 @@ Future<void> main() async {
 
     // Insert some data
     var insertResult = await freetds.query(
-      "INSERT INTO #test_freetds (SYBNULL) VALUES (:SYBNULL);",
+      "INSERT INTO #null_test_freetds (SYBNULL) VALUES (:SYBNULL);",
       [
         QueryParam(name: "SYBNULL", null),
       ],
@@ -828,7 +834,7 @@ Future<void> main() async {
     expect(insertResult.last.affectedRows, equals(1));
 
     // Query the database using a parameterized query
-    var results = await freetds.query("SELECT * FROM #test_freetds");
+    var results = await freetds.query("SELECT * FROM #null_test_freetds");
     expect(results.length, equals(1));
     expect(results.last.data.length, equals(1));
     expect(results.last.data[0].values.length, equals(1));
@@ -838,7 +844,7 @@ Future<void> main() async {
     expect(FreeTDS.lastError, isNull);
 
     // Drop the test table
-    await freetds.query("DROP TABLE #test_freetds");
+    await freetds.query("DROP TABLE #null_test_freetds");
     expect(FreeTDS.lastError, isNull);
 
     // Finally, close the connection

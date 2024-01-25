@@ -1,7 +1,7 @@
 name: freetds
 description: FreeTDS package
 publish_to: 'none'
-version: 1.1.0
+version: 1.0.0
 
 environment:
   sdk: '>=3.1.4 <4.0.0'
@@ -12,6 +12,8 @@ dependencies:
     sdk: flutter
   ffi: ^1.2.0
   tempo: ^0.5.2
+  # noinspection SpellCheckingInspection
+  fixnum: ^1.1.0
   queue: ^3.1.0+2
   decimal: ^2.3.3
   logger: ^2.0.2+1

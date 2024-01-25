@@ -6,17 +6,8 @@
 	<dict>
 		<key>Resources/Info.plist</key>
 		<data>
-		SyiwOzrUFprMtzxYhomC3TqNaSM=
+		44jQzqA8izOzKT3kJp/wvE3RBio=
 		</data>
-		<key>Resources/en.lproj/InfoPlist.strings</key>
-		<dict>
-			<key>hash</key>
-			<data>
-			MiLKDDnrUKr4EmuvhS5VQwxHGK8=
-			</data>
-			<key>optional</key>
-			<true/>
-		</dict>
 		<key>Resources/freetds.conf</key>
 		<data>
 		2FID3oJYj2JyssHCTC0hnNpTV/4=
@@ -24,11 +15,11 @@
 	</dict>
 	<key>files2</key>
 	<dict>
-		<key>Headers/FreeTDSKit.h</key>
+		<key>Headers/FreeTDS.h</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			/Z8/krIiTSDoV4f8LFxfFjhXtZivPyKwi8vH0wJ25TI=
+			II0vljdhnI2SZt86xPTTM7FCIDjhV7twNKJYjRySSK4=
 			</data>
 		</dict>
 		<key>Headers/sybdb.h</key>
@@ -42,31 +33,22 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			8QVCwMPZwnN2yApGfaEC3JLSYy9bAO9RRFiODWAqoq0=
+			qyBezvCE7+CHy1L8tKy9n22jAnJWm/GoVsTepMkV4l8=
 			</data>
 		</dict>
 		<key>Modules/module.modulemap</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			z7V13OuCCvBy69cd50rRJ2p7oywuNy1fSdNj556YyVY=
+			vl1uyt6XW7yWu2FEXaR1pbJn5Sndc36DEDotiQj5k18=
 			</data>
 		</dict>
 		<key>Resources/Info.plist</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			UxYdazoJR/KiE46+S+CZ86+5XvS0CatsOM/gPJEyRco=
+			jSmycfAbeCMuOTsG/EM00Wi+mI5khYQMpsk0Z3ENyJw=
 			</data>
-		</dict>
-		<key>Resources/en.lproj/InfoPlist.strings</key>
-		<dict>
-			<key>hash2</key>
-			<data>
-			Oc8u4Ht7Mz58F50L9NeYpbcq9qTlhPUeZCcDu/pPyCg=
-			</data>
-			<key>optional</key>
-			<true/>
 		</dict>
 		<key>Resources/freetds.conf</key>
 		<dict>

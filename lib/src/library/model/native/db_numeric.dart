@@ -7,8 +7,6 @@ base class DBNUMERIC extends Struct {
   external int precision;
   @Uint8()
   external int scale;
-  @Uint8()
-  external int len;
   @Array(33)
   external Array<Uint8> array;
 }

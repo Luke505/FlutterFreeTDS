@@ -1,6 +1,7 @@
 library freetds;
 
 export 'src/communication/freetds_error.dart';
+export 'src/communication/freetds_message.dart';
 export 'src/constants.dart';
 export 'src/error/freetds_error_message.dart';
 export 'src/error/freetds_exception.dart';

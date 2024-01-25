@@ -46,13 +46,6 @@ typedef unsigned char     uint8_t;	/* 8-bit int */
   typedef unsigned int     uint32_t;	/* 32-bit int */
   typedef   signed __int64  int64_t;	/* 64-bit int */
   typedef unsigned __int64 uint64_t;	/* 64-bit int */
-#    if !defined(WIN64) && !defined(_WIN64)
-    typedef   signed int   intptr_t;    /* 32-bit int */
-    typedef unsigned int  uintptr_t;    /* 32-bit int */
-#    else
-    typedef   signed __int64  intptr_t;	/* 64-bit int */
-    typedef unsigned __int64 uintptr_t;	/* 64-bit int */
-#    endif
 #  else				/* defined(WIN32) || defined(_WIN32) || defined(__WIN32__) */
   typedef   signed  short   int16_t;	/* 16-bit int */
   typedef unsigned  short  uint16_t;	/* 16-bit int */
@@ -60,8 +53,6 @@ typedef unsigned char     uint8_t;	/* 8-bit int */
   typedef unsigned  int  uint32_t;	/* 32-bit int */
   typedef   signed  long   int64_t;	/* 64-bit int */
   typedef unsigned  long  uint64_t;	/* 64-bit int */
-  typedef   signed long  intptr_t;
-  typedef unsigned long uintptr_t;
 #  endif
 #endif
 

@@ -1,15 +1,14 @@
 import "dart:ffi";
 import "dart:io";
 
+import 'package:collection/collection.dart';
 import "package:ffi/ffi.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:freetds/freetds.dart";
-import "package:freetds/src/library/model/functions.dart";
-import "package:freetds/src/library/model/model.dart";
 import "package:logger/logger.dart";
 
 class TestUtils {
-  static const host = "127.0.0.1:2638";
+  static const host = "192.168.1.174:2638";
   static const username = "dba";
   static const password = "sql";
   static const database = "test";
@@ -18,49 +17,52 @@ class TestUtils {
   static final Logger logger = Logger(
     level: Level.all,
     output: ConsoleOutput(),
-    printer: PrettyPrinter(
+    printer: SimplePrinter(
       colors: true,
-      methodCount: 0,
       printTime: true,
-      printEmojis: true,
-      errorMethodCount: 15,
-      noBoxingByDefault: true,
     ),
     filter: ProductionFilter(),
   );
-
-  // Handles message callback from FreeTDS library.
-  static int handleMessage(
-    Pointer<DBPROCESS> dbproc,
-    int msgno,
-    int msgstate,
-    int severity,
-    Pointer<Utf8> msgtext,
-    Pointer<Utf8> srvname,
-    Pointer<Utf8> procname,
-    int line,
-  ) {
-    logger.d("Message{msgno: $msgno, msgstate: $msgstate, severity: $severity}: ${msgtext.toDartString()}"
-        " (srvname: $srvname, procname: $procname, line: $line)");
-    return CANCEL;
-  }
 
   static FreeTDS setUpTest() {
     String libraryPath = (goldenFileComparator as LocalFileComparator).basedir.path + "../";
 
     if (Platform.isMacOS) {
-      libraryPath = 'macos/FreeTDSKit.framework/FreeTDSKit';
+      libraryPath = 'macos/FreeTDS.framework/FreeTDS';
     } else if (Platform.isIOS) {
-      libraryPath = 'ios/FreeTDSKit.framework/FreeTDSKit';
+      libraryPath = 'ios/FreeTDS.framework/FreeTDS';
     } else if (Platform.isWindows) {
       libraryPath = 'windows/sybdb.dll';
     } else {
       throw UnsupportedError('FreeTDS is only supported on macOS, iOS and windows.');
     }
 
-    FreeTDS.initTest(libraryPath, false, true, TestUtils.logger);
-    FreeTDS freetds = FreeTDS.instance;
-    freetds.library.dbmsghandle(Pointer.fromFunction<mhandlefunc_Native>(TestUtils.handleMessage, CANCEL));
+    FreeTDS freetds = FreeTDS.initTest(libraryPath, false);
+
+    FreeTDS.logger = (Level level, String msg) => logger.log(level, msg);
+    FreeTDS.errorStream!.stream.listen((event) {
+      logger.e(event);
+    });
+    FreeTDS.messageStream!.stream.listen((event) {
+      logger.d(event);
+    });
+
     return freetds;
+  }
+
+  static double convertDoubleToReal(double d, FreeTDS freetds) {
+    String doubleStr = d.toStringAsPrecision(20);
+    int fromDataType = SYBCHAR;
+    int toDataType = SYBREAL;
+    final Pointer<Uint8> result = malloc<Uint8>();
+    var dbConvertResult = freetds.library.dbconvert(freetds.connection, fromDataType, doubleStr.toNativeUtf8().cast(), doubleStr.length, toDataType, result.cast(), -1);
+    if (dbConvertResult < 0) {
+      throw ArgumentError("Invalid");
+    }
+    return result.cast<Float>().value;
+  }
+
+  static void assertListEquality(List actual, List expected) {
+    expect(ListEquality().equals(actual, expected), isTrue, reason: "Expected: $expected\n  Actual: $actual\nAre not equals");
   }
 }

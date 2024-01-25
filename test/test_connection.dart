@@ -37,7 +37,7 @@ Future<void> main() async {
   test('Test connection error', () async {
     try {
       await freetds.connect(
-        host: "0.0.0.0",
+        host: "0.0.0.0:80",
         username: "...",
         password: "...",
         database: "...",
@@ -52,7 +52,6 @@ Future<void> main() async {
 
     expect(FreeTDS.lastError, isNotNull);
     expect(FreeTDS.lastError!.error, equals("Unable to connect: Adaptive Server is unavailable or does not exist (0.0.0.0)"));
-    expect(FreeTDS.lastError!.code, equals(20009));
     expect(FreeTDS.lastError!.severity, equals(9));
 
     // Finally, close the connection

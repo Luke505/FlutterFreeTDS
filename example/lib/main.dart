@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:freetds/freetds.dart';
 import 'package:logger/logger.dart';
-import 'package:tempo/tempo.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,20 +33,22 @@ class _MyAppState extends State<MyApp> {
 
   final FreeTDS _freetdsPlugin = FreeTDS.instance;
 
-  StreamSubscription? messageStreamSubscription;
   StreamSubscription<FreeTDSError>? errorStreamSubscription;
+  StreamSubscription<FreeTDSMessage>? messageStreamSubscription;
 
   @override
   void initState() {
     super.initState();
 
     FreeTDS.setErrorStream(true);
-    errorStreamSubscription = FreeTDS.errorStream!.stream.listen((FreeTDSError event) {
-      logger.log(Level.error, event);
+    FreeTDS.logger = (Level level, String msg) => logger.log(level, msg);
+    errorStreamSubscription = FreeTDS.errorStream!.stream.listen((event) {
+      logger.e(event);
     });
-    FreeTDS.logger = (Level level, String message) {
-      logger.log(Level.values.firstWhere((l) => l.value == level.value), message);
-    };
+    FreeTDS.setMessageStream(true);
+    messageStreamSubscription = FreeTDS.messageStream!.stream.listen((event) {
+      logger.d(event);
+    });
   }
 
   @override
@@ -96,7 +98,7 @@ class _MyAppState extends State<MyApp> {
                   icon: const Icon(Icons.keyboard_arrow_down),
                   //elevation: 16,
                   style: const TextStyle(color: Colors.black),
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     enabledBorder: InputBorder.none,
                     labelText: "Encryption",
                   ),
@@ -110,7 +112,7 @@ class _MyAppState extends State<MyApp> {
                       value: item.value,
                       child: Text(
                         item.name,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.black,
                           fontSize: 18.0,
                         ),
@@ -126,7 +128,7 @@ class _MyAppState extends State<MyApp> {
                   enabled: !loading,
                   maxLines: null,
                 ),
-                SizedBox(height: 10.0),
+                const SizedBox(height: 10.0),
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -136,7 +138,6 @@ class _MyAppState extends State<MyApp> {
                     ),
                   ),
                 ),
-                //if (loading) const CircularProgressIndicator(),
                 if (error != null)
                   Center(
                     child: Text("Error: $error"),
@@ -145,35 +146,53 @@ class _MyAppState extends State<MyApp> {
                   Column(
                     children: [
                       Center(
-                        child: Text("Affected rows: ${getResultAffectedRows(tables!)}"),
+                        child: Column(
+                          children: [
+                            Text("Affected rows: ${getResultAffectedRows(tables!)}"),
+                            Text("# Rows: ${getResultRowCounts(tables!)}"),
+                          ],
+                        ),
                       ),
                       ...(tables!
                           .map(
-                            (table) => table.columns.length > 0
+                            (table) => table.columns.isNotEmpty
                                 ? Padding(
                                     padding: const EdgeInsets.symmetric(vertical: 16.0),
                                     child: SingleChildScrollView(
                                       scrollDirection: Axis.horizontal,
                                       child: DataTable(
                                         border: TableBorder.all(),
-                                        columns: table.columns
-                                            .map((column) => DataColumn(
-                                                  label: Expanded(
-                                                    child: Text(
-                                                      column,
+                                        columns: [
+                                          const DataColumn(
+                                            label: Expanded(
+                                              child: Text(
+                                                "#",
+                                                style: TextStyle(fontWeight: FontWeight.bold),
+                                              ),
+                                            ),
+                                            numeric: true,
+                                          ),
+                                          ...table.columns.map((column) => DataColumn(
+                                                label: Expanded(
+                                                  child: Text(
+                                                    column,
                                                       style: const TextStyle(fontWeight: FontWeight.bold),
                                                     ),
                                                   ),
                                                 ))
-                                            .toList(),
+                                        ],
                                         rows: table.data
-                                            .map((row) => DataRow(
-                                                  cells: table.columns
-                                                      .map((column) => DataCell(
-                                                            Text(row[column]?.toString() ?? "NULL"),
-                                                            placeholder: row[column] == null,
+                                            .mapIndexed((i, row) => DataRow(
+                                                  cells: [
+                                                    DataCell(
+                                                      Text((i + 1).toString()),
+                                                      placeholder: true,
+                                                    ),
+                                                    ...table.columns.map((column) => DataCell(
+                                                          Text(row[column]?.toString() ?? "NULL"),
+                                                          placeholder: row[column] == null,
                                                           ))
-                                                      .toList(),
+                                                  ],
                                                 ))
                                             .toList(),
                                       ),
@@ -250,10 +269,10 @@ class _MyAppState extends State<MyApp> {
 
       for (var table in tmpResult) {
         logger.i("output of #${table.affectedRows} affected rows: ${json.encode(table.data, toEncodable: (dynamic object) {
-          if (object is OffsetDateTime) {
-            return object.toString();
-          } else {
+          try {
             return object.toJson();
+          } on NoSuchMethodError {
+            return object.toString();
           }
         })}");
       }
@@ -280,6 +299,16 @@ class _MyAppState extends State<MyApp> {
       return tables[0].affectedRows;
     } else if (tables.length > 1) {
       return tables.map((t) => t.affectedRows).toList();
+    } else {
+      return 0;
+    }
+  }
+
+  dynamic getResultRowCounts(List<FreeTDSExecutionResultTable> tables) {
+    if (tables.length == 1) {
+      return tables[0].data.length;
+    } else if (tables.length > 1) {
+      return tables.map((t) => t.data.length).toList();
     } else {
       return 0;
     }
