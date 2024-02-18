@@ -11,6 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   ffi: ^1.2.0
+  uuid: ^4.0.0
   tempo: ^0.5.2
   # noinspection SpellCheckingInspection
   fixnum: ^1.1.0

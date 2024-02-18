@@ -1,14 +1,12 @@
-import "dart:ffi";
 import "dart:io";
 
 import 'package:collection/collection.dart';
-import "package:ffi/ffi.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:freetds/freetds.dart";
 import "package:logger/logger.dart";
 
 class TestUtils {
-  static const host = "192.168.1.174:2638";
+  static const host = "0.0.0.0:2638";
   static const username = "dba";
   static const password = "sql";
   static const database = "test";
@@ -48,18 +46,6 @@ class TestUtils {
     });
 
     return freetds;
-  }
-
-  static double convertDoubleToReal(double d, FreeTDS freetds) {
-    String doubleStr = d.toStringAsPrecision(20);
-    int fromDataType = SYBCHAR;
-    int toDataType = SYBREAL;
-    final Pointer<Uint8> result = malloc<Uint8>();
-    var dbConvertResult = freetds.library.dbconvert(freetds.connection, fromDataType, doubleStr.toNativeUtf8().cast(), doubleStr.length, toDataType, result.cast(), -1);
-    if (dbConvertResult < 0) {
-      throw ArgumentError("Invalid");
-    }
-    return result.cast<Float>().value;
   }
 
   static void assertListEquality(List actual, List expected) {

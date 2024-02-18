@@ -103,7 +103,7 @@ class Connection {
     }
   }
 
-  static dynamic getData(Library library, Pointer<DBPROCESS> connection, Pointer<SQL_COLUMN> column) {
+  static dynamic getData(Library library, Pointer<DBPROCESS> connection, Pointer<SQL_COLUMN> column, int columnIndex) {
     switch (column.ref.type) {
       case SYBBIT:
         return column.ref.data.cast<Uint8>().value == 1 ? true : false;
@@ -126,7 +126,9 @@ class Connection {
       case SYBFLT8:
         return column.ref.data.cast<Double>().value;
       case SYBREAL:
-        return column.ref.data.cast<Float>().value;
+        return num.parse(
+            Decimal.parse(column.ref.data.cast<Float>().value.toStringAsFixed(20)).toStringAsPrecision(7)
+        );
       case SYBDECIMAL:
       case SYBNUMERIC:
         var codeUnits = column.ref.data.cast<Uint8>();
@@ -137,7 +139,22 @@ class Connection {
           length++;
         }
 
-        return Decimal.parse(utf8.decode(codeUnits.asTypedList(length)).trim()).toDouble();
+        Pointer<DBTYPEINFO> columnTypeInfo = library.dbcoltypeinfo(connection, columnIndex + 1);
+        if (columnTypeInfo == nullptr) {
+          throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.outOfMemoryError);
+        }
+
+        if (columnTypeInfo.ref.scale == 0) {
+          return num.parse(
+              Decimal.parse(utf8.decode(codeUnits.asTypedList(length)).trim()).ceil(scale: 0)
+                  .toStringAsPrecision(columnTypeInfo.ref.precision)
+          ).toInt();
+        } else {
+          return double.parse(
+              Decimal.parse(utf8.decode(codeUnits.asTypedList(length)).trim()).ceil(scale: columnTypeInfo.ref.scale)
+                  .toStringAsPrecision(columnTypeInfo.ref.precision)
+          );
+        }
       case SYBMONEY4:
         return Decimal.fromInt(column.ref.data.cast<DBMONEY4>().ref.mny4).shift(-4).toDouble();
       case SYBMONEY:

@@ -6,6 +6,7 @@ import "package:freetds/freetds.dart";
 import "package:freetds/src/library/model/model.dart";
 import "package:freetds/src/utils/connection_utils.dart";
 import "package:tempo/tempo.dart";
+import "package:uuid/uuid.dart";
 
 import "model/int_query_param_test_model.dart";
 import 'utils/test_utils.dart';
@@ -504,7 +505,7 @@ Future<void> main() async {
       column.ref.data = malloc<Uint8>(data.length);
       column.ref.data.asTypedList(data.length).setAll(0, data);
 
-      var v = Connection.getData(freetds.library, freetds.connection, column);
+      var v = Connection.getData(freetds.library, freetds.connection, column, i + 1);
       expect(v.runtimeType, int, reason: "Invalid value type for element: ${element.name}");
       expect(v, element.dartValue as int, reason: "Invalid value for element: ${element.name}");
     }
@@ -784,10 +785,10 @@ Future<void> main() async {
     expect(results.last.data[0]["SYBUINT8"], equals(374632567765));
     expect(results.last.data[0]["SYBINT8_N"], equals(374632567765));
     expect(results.last.data[0]["SYBUINT8_N"], equals(374632567765));
-    expect(results.last.data[0]["SYBFLT8_FLOAT4"], equals(TestUtils.convertDoubleToReal(1.3, freetds)));
+    expect(results.last.data[0]["SYBFLT8_FLOAT4"], equals(1.3));
     expect(results.last.data[0]["SYBFLT8_FLOAT8"], equals(1237.45));
     expect(results.last.data[0]["SYBFLT8_DOUBLE"], equals(1237.45));
-    expect(results.last.data[0]["SYBREAL"], equals(TestUtils.convertDoubleToReal(1237.45, freetds)));
+    expect(results.last.data[0]["SYBREAL"], equals(1237.45));
     expect(results.last.data[0]["SYBMONEY"], equals(1237.45));
     expect(results.last.data[0]["SYBMONEY4"], equals(1237.45));
     expect(results.last.data[0]["SYBNUMERIC"], equals(947919.25));
@@ -798,6 +799,234 @@ Future<void> main() async {
 
     // Drop the test table
     await freetds.query("DROP TABLE #number_test_freetds");
+    expect(FreeTDS.lastError, isNull);
+
+    // Finally, close the connection
+    await freetds.disconnect();
+    expect(FreeTDS.lastError, isNull);
+  });
+
+  test('Test SQL INSERT & SELECT Number - Precision overflow', () async {
+    await freetds.connect(
+      host: TestUtils.host,
+      username: TestUtils.username,
+      password: TestUtils.password,
+      database: TestUtils.database,
+      encryption: TestUtils.encryption,
+    );
+
+    // Create a table
+    await freetds.query("""
+    CREATE TABLE #number_overflow_test_freetds
+    (
+        id INTEGER DEFAULT AUTOINCREMENT PRIMARY KEY,
+        SYBFLT8_FLOAT4 float(9),
+        SYBFLT8_FLOAT8 float(30),
+        SYBFLT8_DOUBLE double,
+        SYBREAL real,
+        SYBMONEY money,
+        SYBMONEY4 smallmoney,
+        SYBNUMERIC numeric(8,2),
+        SYBNUMERIC15 numeric(15,9),
+        SYBDECIMAL decimal(8,2),
+        SYBDECIMAL15 decimal(15,9),
+    );
+    """);
+
+    // Insert some data
+    var insertResult = await freetds.query(
+      "INSERT INTO #number_overflow_test_freetds (SYBFLT8_FLOAT4, SYBFLT8_FLOAT8, SYBFLT8_DOUBLE, SYBREAL, SYBMONEY, SYBMONEY4, SYBNUMERIC, SYBNUMERIC15, SYBDECIMAL, SYBDECIMAL15)"
+      " VALUES (:SYBFLT8_FLOAT4, :SYBFLT8_FLOAT8, :SYBFLT8_DOUBLE, :SYBREAL, :SYBMONEY, :SYBMONEY4, :SYBNUMERIC, :SYBNUMERIC15, :SYBDECIMAL, :SYBDECIMAL15)",
+      [
+        QueryParam(name: "SYBFLT8_FLOAT4", 1.3, precision: 4, scale: 2, datatype: SYBFLT8),
+        QueryParam(name: "SYBFLT8_FLOAT8", 1237.45, precision: 8, scale: 2, datatype: SYBFLT8),
+        QueryParam(name: "SYBFLT8_DOUBLE", 1237.45, precision: 8, scale: 2, datatype: SYBFLT8),
+        QueryParam(name: "SYBREAL", 1237.45, precision: 8, scale: 2, datatype: SYBREAL),
+        QueryParam(name: "SYBMONEY", 1237.45, precision: 8, scale: 2, datatype: SYBMONEY),
+        QueryParam(name: "SYBMONEY4", 1237.45, precision: 8, scale: 2, datatype: SYBMONEY4),
+        QueryParam(name: "SYBNUMERIC", 947919.259, precision: 8, scale: 2, datatype: SYBNUMERIC),
+        QueryParam(name: "SYBNUMERIC15", 567765.3746325679, precision: 15, scale: 9, datatype: SYBNUMERIC),
+        QueryParam(name: "SYBDECIMAL", 947919.259, precision: 8, scale: 2, datatype: SYBDECIMAL),
+        QueryParam(name: "SYBDECIMAL15", 567765.3746325679, precision: 15, scale: 9, datatype: SYBDECIMAL),
+      ],
+    );
+    expect(insertResult.length, equals(1));
+    expect(insertResult.last.data.length, equals(0));
+    expect(insertResult.last.affectedRows, equals(1));
+
+    // Insert some data
+    insertResult = await freetds.query(
+      "INSERT INTO #number_overflow_test_freetds (SYBFLT8_FLOAT4, SYBFLT8_FLOAT8, SYBFLT8_DOUBLE, SYBREAL, SYBMONEY, SYBMONEY4, SYBNUMERIC, SYBNUMERIC15, SYBDECIMAL, SYBDECIMAL15)"
+      " VALUES (:SYBFLT8_FLOAT4, :SYBFLT8_FLOAT8, :SYBFLT8_DOUBLE, :SYBREAL, :SYBMONEY, :SYBMONEY4, :SYBNUMERIC, :SYBNUMERIC15, :SYBDECIMAL, :SYBDECIMAL15)",
+      [
+        QueryParam(name: "SYBFLT8_FLOAT4", 5.123456789, precision: 4, scale: 2, datatype: SYBFLT8),
+        QueryParam(name: "SYBFLT8_FLOAT8", 5.123456789, precision: 8, scale: 2, datatype: SYBFLT8),
+        QueryParam(name: "SYBFLT8_DOUBLE", 5.123456789, precision: 8, scale: 2, datatype: SYBFLT8),
+        QueryParam(name: "SYBREAL", 5.123456789, precision: 8, scale: 7, datatype: SYBREAL),
+        QueryParam(name: "SYBMONEY", 5.123456789, precision: 8, scale: 2, datatype: SYBMONEY),
+        QueryParam(name: "SYBMONEY4", 5.123456789, precision: 8, scale: 2, datatype: SYBMONEY4),
+        QueryParam(name: "SYBNUMERIC", 947919.259, precision: 8, scale: 2, datatype: SYBNUMERIC),
+        QueryParam(name: "SYBNUMERIC15", 567765.3746325679, precision: 15, scale: 9, datatype: SYBNUMERIC),
+        QueryParam(name: "SYBDECIMAL", 947919.259, precision: 8, scale: 2, datatype: SYBDECIMAL),
+        QueryParam(name: "SYBDECIMAL15", 567765.3746325679, precision: 15, scale: 9, datatype: SYBDECIMAL),
+      ],
+    );
+    expect(insertResult.length, equals(1));
+    expect(insertResult.last.data.length, equals(0));
+    expect(insertResult.last.affectedRows, equals(1));
+
+    // Insert some data
+    insertResult = await freetds.query(
+      "INSERT INTO #number_overflow_test_freetds (SYBFLT8_FLOAT4, SYBFLT8_FLOAT8, SYBFLT8_DOUBLE, SYBREAL, SYBMONEY, SYBMONEY4, SYBNUMERIC, SYBNUMERIC15, SYBDECIMAL, SYBDECIMAL15)"
+      " VALUES (:SYBFLT8_FLOAT4, :SYBFLT8_FLOAT8, :SYBFLT8_DOUBLE, :SYBREAL, :SYBMONEY, :SYBMONEY4, :SYBNUMERIC, :SYBNUMERIC15, :SYBDECIMAL, :SYBDECIMAL15)",
+      [
+        QueryParam(name: "SYBFLT8_FLOAT4", 1.39, precision: 4, scale: 2, datatype: SYBFLT8),
+        QueryParam(name: "SYBFLT8_FLOAT8", 1237.459, precision: 8, scale: 2, datatype: SYBFLT8),
+        QueryParam(name: "SYBFLT8_DOUBLE", 1237.459, precision: 8, scale: 2, datatype: SYBFLT8),
+        QueryParam(name: "SYBREAL", 1237.459, precision: 8, scale: 2, datatype: SYBREAL),
+        QueryParam(name: "SYBMONEY", 1237.459, precision: 8, scale: 2, datatype: SYBMONEY),
+        QueryParam(name: "SYBMONEY4", 1237.459, precision: 8, scale: 2, datatype: SYBMONEY4),
+        QueryParam(name: "SYBNUMERIC", 947919.259, precision: 8, scale: 2, datatype: SYBNUMERIC),
+        QueryParam(name: "SYBNUMERIC15", 567765.3746325679, precision: 15, scale: 9, datatype: SYBNUMERIC),
+        QueryParam(name: "SYBDECIMAL", 947919.259, precision: 8, scale: 2, datatype: SYBDECIMAL),
+        QueryParam(name: "SYBDECIMAL15", 567765.3746325679, precision: 15, scale: 9, datatype: SYBDECIMAL),
+      ],
+    );
+    expect(insertResult.length, equals(1));
+    expect(insertResult.last.data.length, equals(0));
+    expect(insertResult.last.affectedRows, equals(1));
+
+    // Insert some data
+    insertResult = await freetds.query(
+      "INSERT INTO #number_overflow_test_freetds (SYBFLT8_FLOAT4, SYBFLT8_FLOAT8, SYBFLT8_DOUBLE, SYBREAL, SYBMONEY, SYBMONEY4, SYBNUMERIC, SYBNUMERIC15, SYBDECIMAL, SYBDECIMAL15)"
+      " VALUES (:SYBFLT8_FLOAT4, :SYBFLT8_FLOAT8, :SYBFLT8_DOUBLE, :SYBREAL, :SYBMONEY, :SYBMONEY4, :SYBNUMERIC, :SYBNUMERIC15, :SYBDECIMAL, :SYBDECIMAL15)",
+      [
+        QueryParam(name: "SYBFLT8_FLOAT4", 1.39, datatype: SYBFLT8),
+        QueryParam(name: "SYBFLT8_FLOAT8", 1237.456789, datatype: SYBFLT8),
+        QueryParam(name: "SYBFLT8_DOUBLE", 1237.456789, datatype: SYBFLT8),
+        QueryParam(name: "SYBREAL", 1237.456789, datatype: SYBREAL),
+        QueryParam(name: "SYBMONEY", 1237.456789, datatype: SYBMONEY),
+        QueryParam(name: "SYBMONEY4", 1237.456789, datatype: SYBMONEY4),
+        QueryParam(name: "SYBNUMERIC", 947919.259, datatype: SYBNUMERIC),
+        QueryParam(name: "SYBNUMERIC15", 567765.3746325679, datatype: SYBNUMERIC),
+        QueryParam(name: "SYBDECIMAL", 947919.259, datatype: SYBDECIMAL),
+        QueryParam(name: "SYBDECIMAL15", 567765.3746325679, datatype: SYBDECIMAL),
+      ],
+    );
+    expect(insertResult.length, equals(1));
+    expect(insertResult.last.data.length, equals(0));
+    expect(insertResult.last.affectedRows, equals(1));
+
+    // Query the database using a parameterized query
+    var results = await freetds.query("SELECT * FROM #number_overflow_test_freetds");
+    expect(results.length, equals(1));
+    expect(results.last.data.length, equals(4));
+    expect(results.last.data[0].values.length, equals(11));
+    expect(results.last.data[1].values.length, equals(11));
+    expect(results.last.data[2].values.length, equals(11));
+    expect(results.last.data[3].values.length, equals(11));
+    expect(results.last.affectedRows, equals(-1));
+
+    expect(results.last.data[0]["SYBFLT8_FLOAT4"], equals(1.3));
+    expect(results.last.data[0]["SYBFLT8_FLOAT8"], equals(1237.45));
+    expect(results.last.data[0]["SYBFLT8_DOUBLE"], equals(1237.45));
+    expect(results.last.data[0]["SYBREAL"], equals(1237.45));
+    expect(results.last.data[0]["SYBMONEY"], equals(1237.45));
+    expect(results.last.data[0]["SYBMONEY4"], equals(1237.45));
+    expect(results.last.data[0]["SYBNUMERIC"], equals(947919.26));
+    expect(results.last.data[0]["SYBNUMERIC15"], equals(567765.374632568));
+    expect(results.last.data[0]["SYBDECIMAL"], equals(947919.26));
+    expect(results.last.data[0]["SYBDECIMAL15"], equals(567765.374632568));
+
+    expect(results.last.data[1]["SYBFLT8_FLOAT4"], equals(5.123457));
+    expect(results.last.data[1]["SYBFLT8_FLOAT8"], equals(5.123456789));
+    expect(results.last.data[1]["SYBFLT8_DOUBLE"], equals(5.123456789));
+    expect(results.last.data[1]["SYBREAL"], equals(5.123457));
+    expect(results.last.data[1]["SYBMONEY"], equals(5.1234));
+    expect(results.last.data[1]["SYBMONEY4"], equals(5.1234));
+    expect(results.last.data[1]["SYBNUMERIC"], equals(947919.26));
+    expect(results.last.data[1]["SYBNUMERIC15"], equals(567765.374632568));
+    expect(results.last.data[1]["SYBDECIMAL"], equals(947919.26));
+    expect(results.last.data[1]["SYBDECIMAL15"], equals(567765.374632568));
+
+    expect(results.last.data[2]["SYBFLT8_FLOAT4"], equals(1.39));
+    expect(results.last.data[2]["SYBFLT8_FLOAT8"], equals(1237.459));
+    expect(results.last.data[2]["SYBFLT8_DOUBLE"], equals(1237.459));
+    expect(results.last.data[2]["SYBREAL"], equals(1237.459));
+    expect(results.last.data[2]["SYBMONEY"], equals(1237.459));
+    expect(results.last.data[2]["SYBMONEY4"], equals(1237.459));
+    expect(results.last.data[2]["SYBNUMERIC"], equals(947919.26));
+    expect(results.last.data[2]["SYBNUMERIC15"], equals(567765.374632568));
+    expect(results.last.data[2]["SYBDECIMAL"], equals(947919.26));
+    expect(results.last.data[2]["SYBDECIMAL15"], equals(567765.374632568));
+
+    expect(results.last.data[3]["SYBFLT8_FLOAT4"], equals(1.39));
+    expect(results.last.data[3]["SYBFLT8_FLOAT8"], equals(1237.456789));
+    expect(results.last.data[3]["SYBFLT8_DOUBLE"], equals(1237.456789));
+    expect(results.last.data[3]["SYBREAL"], equals(1237.457));
+    expect(results.last.data[3]["SYBMONEY"], equals(1237.4567));
+    expect(results.last.data[3]["SYBMONEY4"], equals(1237.4567));
+    expect(results.last.data[3]["SYBNUMERIC"], equals(947919.26));
+    expect(results.last.data[3]["SYBNUMERIC15"], equals(567765.374632568));
+    expect(results.last.data[3]["SYBDECIMAL"], equals(947919.26));
+    expect(results.last.data[3]["SYBDECIMAL15"], equals(567765.374632568));
+    expect(FreeTDS.lastError, isNull);
+
+    // Drop the test table
+    await freetds.query("TRUNCATE TABLE #number_overflow_test_freetds");
+    expect(FreeTDS.lastError, isNull);
+
+    // Drop the test table
+    await freetds.query("DROP TABLE #number_overflow_test_freetds");
+    expect(FreeTDS.lastError, isNull);
+
+    // Finally, close the connection
+    await freetds.disconnect();
+    expect(FreeTDS.lastError, isNull);
+  });
+
+  test('Test SQL INSERT & SELECT UUID', () async {
+    await freetds.connect(
+      host: TestUtils.host,
+      username: TestUtils.username,
+      password: TestUtils.password,
+      database: TestUtils.database,
+      encryption: TestUtils.encryption,
+    );
+
+    // Create a table
+    await freetds.query("""
+    CREATE TABLE #uuid_test_freetds
+    (
+        SYBUUID CHAR(36),
+    );
+    """);
+
+    var uuid = Uuid().v4();
+
+    // Insert some data
+    var insertResult = await freetds.query(
+      "INSERT INTO #uuid_test_freetds (SYBUUID) VALUES (:SYBUUID);",
+      [
+        QueryParam(name: "SYBUUID", uuid),
+      ],
+    );
+    expect(insertResult.length, equals(1));
+    expect(insertResult.last.data.length, equals(0));
+    expect(insertResult.last.affectedRows, equals(1));
+
+    // Query the database using a parameterized query
+    var results = await freetds.query("SELECT * FROM #uuid_test_freetds");
+    expect(results.length, equals(1));
+    expect(results.last.data.length, equals(1));
+    expect(results.last.data[0].values.length, equals(1));
+    expect(results.last.affectedRows, equals(-1));
+
+    expect(results.last.data[0]["SYBUUID"], equals(uuid));
+    expect(FreeTDS.lastError, isNull);
+
+    // Drop the test table
+    await freetds.query("DROP TABLE #uuid_test_freetds");
     expect(FreeTDS.lastError, isNull);
 
     // Finally, close the connection

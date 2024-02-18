@@ -495,7 +495,7 @@ class FreeTDS {
                     logger!(Level.trace, "DATA > Column $columnName, info: ${json.encode(SQLColumn.fromNative(column.ref))}");
                   }
 
-                  value = Connection.getData(_library, _connection, column);
+                  value = Connection.getData(_library, _connection, column, i);
 
                   if (lastError != null) {
                     throw FreeTDSException.fromFreeTDSError(lastError!);
