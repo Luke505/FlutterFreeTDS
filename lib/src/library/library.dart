@@ -9,15 +9,17 @@ class Library {
   late DynamicLibrary _library;
 
   Library() {
-    if (Platform.isMacOS || Platform.isIOS) {
-      _library = DynamicLibrary.open('FreeTDS.framework/FreeTDS');
-      _loadLibraryFunctions();
+    if (Platform.isIOS) {
+      _library = DynamicLibrary.open('FreeTDS-ios.framework/FreeTDS-ios');
+    } else if (Platform.isMacOS) {
+      _library = DynamicLibrary.open('FreeTDS-macos.framework/FreeTDS-macos');
     } else if (Platform.isWindows) {
       _library = DynamicLibrary.open('sybdb.dll');
-      _loadLibraryFunctions();
     } else {
       throw UnsupportedError('FreeTDS is only supported on macOS, iOS and windows.');
     }
+
+    _loadLibraryFunctions();
   }
 
   Library.test(String libraryPath) {

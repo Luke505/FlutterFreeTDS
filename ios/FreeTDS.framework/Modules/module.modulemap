@@ -1,6 +1,0 @@
-framework module FreeTDS {
-  umbrella header "FreeTDS.h"
-  export *
-
-  module * { export * }
-}

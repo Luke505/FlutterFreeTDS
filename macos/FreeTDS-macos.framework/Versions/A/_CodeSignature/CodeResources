@@ -6,7 +6,7 @@
 	<dict>
 		<key>Resources/Info.plist</key>
 		<data>
-		44jQzqA8izOzKT3kJp/wvE3RBio=
+		SZo+ox//8b/lq5PS6PaS+5hQF2I=
 		</data>
 		<key>Resources/freetds.conf</key>
 		<data>
@@ -36,18 +36,11 @@
 			qyBezvCE7+CHy1L8tKy9n22jAnJWm/GoVsTepMkV4l8=
 			</data>
 		</dict>
-		<key>Modules/module.modulemap</key>
-		<dict>
-			<key>hash2</key>
-			<data>
-			vl1uyt6XW7yWu2FEXaR1pbJn5Sndc36DEDotiQj5k18=
-			</data>
-		</dict>
 		<key>Resources/Info.plist</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			jSmycfAbeCMuOTsG/EM00Wi+mI5khYQMpsk0Z3ENyJw=
+			MVMvq/lMytIqb4xXM7S3e6bLDqzE9iI8rPdTCiU9V94=
 			</data>
 		</dict>
 		<key>Resources/freetds.conf</key>

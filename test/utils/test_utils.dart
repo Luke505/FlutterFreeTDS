@@ -25,10 +25,10 @@ class TestUtils {
   static FreeTDS setUpTest() {
     String libraryPath = (goldenFileComparator as LocalFileComparator).basedir.path + "../";
 
-    if (Platform.isMacOS) {
-      libraryPath = 'macos/FreeTDS.framework/FreeTDS';
-    } else if (Platform.isIOS) {
-      libraryPath = 'ios/FreeTDS.framework/FreeTDS';
+    if (Platform.isIOS) {
+      libraryPath = 'ios/FreeTDS-ios.framework/FreeTDS-ios';
+    } else if (Platform.isMacOS) {
+      libraryPath = 'macos/FreeTDS-macos.framework/FreeTDS-macos';
     } else if (Platform.isWindows) {
       libraryPath = 'windows/sybdb.dll';
     } else {

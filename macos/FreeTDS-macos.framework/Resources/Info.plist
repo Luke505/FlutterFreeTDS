@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>BuildMachineOSBuild</key>
-	<string>23B74</string>
+	<string>23C71</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>FreeTDS</string>
+	<string>FreeTDS-macos</string>
 	<key>CFBundleIdentifier</key>
 	<string>net.developerpass.FreeTDS</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>FreeTDS</string>
+	<string>FreeTDS-macos</string>
 	<key>CFBundlePackageType</key>
 	<string>FMWK</string>
 	<key>CFBundleShortVersionString</key>
@@ -33,18 +33,18 @@
 	<key>DTPlatformName</key>
 	<string>macosx</string>
 	<key>DTPlatformVersion</key>
-	<string>14.2</string>
+	<string>14.4</string>
 	<key>DTSDKBuild</key>
-	<string>23C53</string>
+	<string>23E208</string>
 	<key>DTSDKName</key>
-	<string>macosx14.2</string>
+	<string>macosx14.4</string>
 	<key>DTXcode</key>
-	<string>1520</string>
+	<string>1530</string>
 	<key>DTXcodeBuild</key>
-	<string>15C500b</string>
+	<string>15E204a</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>10.14</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2023 __MyCompanyName__. All rights reserved.</string>
+	<string>Copyright © 2024 __MyCompanyName__. All rights reserved.</string>
 </dict>
 </plist>
