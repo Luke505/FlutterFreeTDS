@@ -8,6 +8,7 @@ import 'dart:io' show Platform;
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart';
 import 'package:freetds/src/communication/freetds_error.dart';
+import 'package:freetds/src/communication/freetds_message.dart';
 import 'package:freetds/src/constants.dart';
 import 'package:freetds/src/error/freetds_error_message.dart';
 import 'package:freetds/src/error/freetds_exception.dart';
@@ -19,8 +20,6 @@ import 'package:freetds/src/query_param.dart';
 import 'package:freetds/src/utils/connection_utils.dart';
 import 'package:logger/logger.dart';
 import 'package:queue/queue.dart' show Queue;
-
-import 'communication/freetds_message.dart';
 
 class FreeTDS {
   static const int defaultTimeout = 5;
