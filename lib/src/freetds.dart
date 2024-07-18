@@ -256,17 +256,46 @@ class FreeTDS {
 
   // region Action
 
-  Future<void> connect({required String host, required String username, required String password, String? database, SYBEncryptionLevel? encryption}) async {
+  Future<void> connect(
+      {required String host,
+      required String username,
+      required String password,
+      String? database,
+      SYBEncryptionLevel? encryption,
+      String? charset = "utf8",
+      String? lang,
+      String? appName,
+      int? version = DBVERSION_100}) async {
     assert(host.isNotEmpty);
     assert(username.isNotEmpty);
     assert(password.isNotEmpty);
 
     if (_queue != null) {
       await _queue!.add(() async {
-        await _connect(host: host, username: username, password: password, database: database, encryption: encryption);
+        await _connect(
+          host: host,
+          username: username,
+          password: password,
+          database: database,
+          encryption: encryption,
+          charset: charset,
+          lang: lang,
+          appName: appName,
+          version: version,
+        );
       });
     } else {
-      await _connect(host: host, username: username, password: password, database: database, encryption: encryption);
+      await _connect(
+        host: host,
+        username: username,
+        password: password,
+        database: database,
+        encryption: encryption,
+        charset: charset,
+        lang: lang,
+        appName: appName,
+        version: version,
+      );
     }
   }
 
@@ -276,9 +305,10 @@ class FreeTDS {
       required String password,
       String? database,
       SYBEncryptionLevel? encryption,
-      String? charset = "UTF-8",
+      String? charset,
       String? lang,
-      int? version = DBVERSION_100}) async {
+      String? appName,
+      int? version}) async {
     lastError = null;
 
     if (isConnected()) {
@@ -320,6 +350,13 @@ class FreeTDS {
 
     if (lang != null) {
       if (_library.dbsetlname(_login, lang.toNativeUtf8(), DBSETNATLANG) == 0) {
+        _cleanupAfterConnection();
+        throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
+      }
+    }
+
+    if (appName != null) {
+      if (_library.dbsetlname(_login, appName.toNativeUtf8(), DBSETAPP) == 0) {
         _cleanupAfterConnection();
         throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
       }

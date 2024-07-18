@@ -11,9 +11,9 @@ dependencies:
   freetds:
     path: ../
   tempo: ^0.5.2
-  logger: ^2.0.2+1
-  decimal: ^2.3.3
-  cupertino_icons: ^1.0.6
+  logger: ^2.0.0
+  decimal: ^3.0.0
+  cupertino_icons: ^1.0.0
 
 dev_dependencies:
   flutter_lints:

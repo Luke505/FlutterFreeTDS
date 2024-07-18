@@ -24,6 +24,7 @@ Future<void> main() async {
       password: TestUtils.password,
       database: TestUtils.database,
       encryption: TestUtils.encryption,
+      appName: "Test App",
     );
     sleep(Duration(milliseconds: 300));
     expect(FreeTDS.lastError, isNull);

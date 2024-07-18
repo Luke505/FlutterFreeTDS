@@ -27,6 +27,8 @@ const MAXPRECISION = 77;
 /*
 UNMANAGED:
 
+const SYBNTEXT = 0;
+const SYBNVARCHAR = 0;
 const XSYBCHAR = 0;
 const XSYBVARCHAR = 0;
 const XSYBNVARCHAR = 0;
@@ -46,7 +48,6 @@ const SYBBOUNDARY = 0;
 const SYBDATEN = 0;
 const SYB5INT8 = 0;
 const SYBINTERVAL = 0;
-const SYBLONGCHAR = 0;
 const SYBSENSITIVITY = 0;
 const SYBTIMEN = 0;
 const SYBUINTN = 0;
@@ -284,6 +285,7 @@ const TDS_TOKEN_TRAILING = 141354;
 const int DBSETHOST = 1;
 const int DBSETUSER = 2;
 const int DBSETPWD = 3;
+const int DBSETAPP = 5;
 const int DBSETNATLANG = 7;
 const int DBSETCHARSET = 10;
 const int DBSETENCRYPTION = 15;

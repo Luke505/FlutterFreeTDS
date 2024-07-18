@@ -527,17 +527,29 @@ Future<void> main() async {
       SYBCHAR char(255),
       SYBVARCHAR varchar(255),
       SYBTEXT text,
+      SYBLONGCHAR varchar(1024),
     );
     """);
 
+    const String longText = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
+        'Vestibulum consequat, orci ac laoreet cursus, dolor sem luctus lorem, eget '
+        'congue justo nunc quis massa. Nam velit ligula, bibendum a pulvinar id, '
+        'aliquam in urna. Donec ultricies lobortis eros, nec auctor dolor semper a. '
+        'Vivamus euismod ullamcorper neque. Suspendisse potenti. Class aptent taciti '
+        'sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. '
+        'Curabitur a scelerisque ligula. Nullam ornare, justo a interdum fermentum, '
+        'massa lorem ultrices felis, at lobortis enim diam eget ipsum. Integer nec '
+        'tortor eu pede pretium vulputate.';
+
     // Insert some data
     var insertResult = await freetds.query(
-      "INSERT INTO #text_test_freetds (SYBCHAR, SYBVARCHAR, SYBTEXT)"
-      " VALUES (:SYBCHAR, :SYBVARCHAR, :SYBTEXT)",
+      "INSERT INTO #text_test_freetds (SYBCHAR, SYBVARCHAR, SYBTEXT, SYBLONGCHAR)"
+      " VALUES (:SYBCHAR, :SYBVARCHAR, :SYBTEXT, :SYBLONGCHAR)",
       [
         QueryParam(name: "SYBCHAR", "test of a character field"),
         QueryParam(name: "SYBVARCHAR", "test of a character field"),
         QueryParam(name: "SYBTEXT", "test of a character field"),
+        QueryParam(name: "SYBLONGCHAR", longText, datatype: SYBLONGCHAR),
       ],
     );
     expect(insertResult.length, equals(1));
@@ -548,12 +560,13 @@ Future<void> main() async {
     var results = await freetds.query("SELECT * FROM #text_test_freetds");
     expect(results.length, equals(1));
     expect(results.last.data.length, equals(1));
-    expect(results.last.data[0].values.length, equals(3));
+    expect(results.last.data[0].values.length, equals(4));
     expect(results.last.affectedRows, equals(-1));
 
     expect(results.last.data[0]["SYBCHAR"], equals("test of a character field"));
     expect(results.last.data[0]["SYBVARCHAR"], equals("test of a character field"));
     expect(results.last.data[0]["SYBTEXT"], equals("test of a character field"));
+    expect(results.last.data[0]["SYBLONGCHAR"], equals(longText));
     expect(FreeTDS.lastError, isNull);
 
     // Drop the test table

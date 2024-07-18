@@ -1,3 +1,8 @@
+# 1.3.0 (July 18, 2024)
+
+* SYBLONGCHAR data type now supported
+* Added *appName* connection parameter
+
 # 1.2.0 (June 27, 2024)
 
 * Rebuild FreeTDS-macos for x86_64, i386 & arm64, and FreeTDS-ios for armv7, arm64 & armv7s  

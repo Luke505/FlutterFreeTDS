@@ -47,10 +47,9 @@ class Connection {
         column.ref.size += 23;
         return CHARBIND;
       case SYBCHAR:
-      case SYBVARCHAR:
-      //case SYBNVARCHAR:
       case SYBTEXT:
-        //case SYBNTEXT:
+      case SYBVARCHAR:
+      case SYBLONGCHAR:
         column.ref.size = min(column.ref.size, FreeTDS.instance.maxTextSize);
         return NTBSTRINGBIND;
       case SYBBIGDATETIME:
@@ -218,8 +217,9 @@ class Connection {
         calloc.free(_value);
         return time;
       case SYBCHAR:
-      case SYBVARCHAR:
       case SYBTEXT:
+      case SYBVARCHAR:
+      case SYBLONGCHAR:
         var codeUnits = column.ref.data.cast<Uint8>();
 
         var maxLength = column.ref.size;
