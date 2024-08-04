@@ -12,6 +12,7 @@ export 'native/db_date_rec_2.dart';
 export 'native/db_date_time.dart';
 export 'native/db_date_time_4.dart';
 export 'native/db_date_time_all.dart';
+export 'native/db_error.dart';
 export 'native/db_money.dart';
 export 'native/db_money_4.dart';
 export 'native/db_numeric.dart';

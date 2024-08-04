@@ -1,16 +1,19 @@
-import "dart:io";
+import 'dart:ffi';
+import 'dart:io';
 
 import 'package:collection/collection.dart';
-import "package:flutter_test/flutter_test.dart";
-import "package:freetds/freetds.dart";
-import "package:logger/logger.dart";
+import 'package:ffi/ffi.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:freetds/freetds.dart';
+import 'package:freetds/src/library/model/native/db_error.dart';
+import 'package:logger/logger.dart';
 
 class TestUtils {
-  static const host = "0.0.0.0:2638";
-  static const username = "dba";
-  static const password = "sql";
-  static const database = "test";
-  static const encryption = SYBEncryptionLevel.REQUIRE;
+  static const String host = "0.0.0.0:2638";
+  static const String username = "dba";
+  static const String password = "sql";
+  static const String database = "test";
+  static const SYBEncryptionLevel? encryption = null;
 
   static final Logger logger = Logger(
     level: Level.all,
@@ -22,20 +25,18 @@ class TestUtils {
     filter: ProductionFilter(),
   );
 
-  static FreeTDS setUpTest() {
+  static Future<void> setUpTest() async {
     String libraryPath = (goldenFileComparator as LocalFileComparator).basedir.path + "../";
 
-    if (Platform.isIOS) {
-      libraryPath = 'ios/FreeTDS-ios.framework/FreeTDS-ios';
-    } else if (Platform.isMacOS) {
-      libraryPath = 'macos/FreeTDS-macos.framework/FreeTDS-macos';
+    if (Platform.isMacOS) {
+      libraryPath = 'macos/FreeTDS-macOS.framework/FreeTDS-macOS';
     } else if (Platform.isWindows) {
       libraryPath = 'windows/sybdb.dll';
     } else {
-      throw UnsupportedError('FreeTDS is only supported on macOS, iOS and windows.');
+      throw UnsupportedError('FreeTDS tests are only supported on macOS and windows.');
     }
 
-    FreeTDS freetds = FreeTDS.initTest(libraryPath, false);
+    await FreeTDS.openForTest(libraryPath);
 
     FreeTDS.logger = (Level level, String msg) => logger.log(level, msg);
     FreeTDS.errorStream!.stream.listen((event) {
@@ -44,8 +45,30 @@ class TestUtils {
     FreeTDS.messageStream!.stream.listen((event) {
       logger.d(event);
     });
+  }
 
-    return freetds;
+  static Future<void> tearDownTest() async {
+    await FreeTDS.close();
+  }
+
+  static void expectNoError() {
+    Pointer<DBERROR> lastError = FreeTDS.library!.dbgetlasterror();
+    expect(lastError, isNot(nullptr));
+    expect(
+      lastError.ref.dberrstr,
+      equals(nullptr),
+      reason: "Unexpected error: ${lastError.ref.dberrstr != nullptr ? lastError.ref.dberrstr.toDartString() : nullptr},"
+          " with severity: ${lastError.ref.severity}",
+    );
+    expect(lastError.ref.severity, equals(-1));
+  }
+
+  static void expectError(String error, int severity) {
+    Pointer<DBERROR> lastError = FreeTDS.library!.dbgetlasterror();
+    expect(lastError, isNot(nullptr));
+    expect(lastError.ref.dberrstr, isNot(nullptr));
+    expect(lastError.ref.dberrstr.toDartString(), equals(error));
+    expect(lastError.ref.severity, equals(severity));
   }
 
   static void assertListEquality(List actual, List expected) {

@@ -31,21 +31,20 @@ class _MyAppState extends State<MyApp> {
   TextEditingController encryption = TextEditingController(text: "");
   TextEditingController query = TextEditingController(text: "SELECT TOP 100 * FROM SYSTABLE");
 
-  final FreeTDS _freetdsPlugin = FreeTDS.instance;
-
   StreamSubscription<FreeTDSError>? errorStreamSubscription;
   StreamSubscription<FreeTDSMessage>? messageStreamSubscription;
 
   @override
-  void initState() {
+  void initState() async {
     super.initState();
 
-    FreeTDS.setErrorStream(true);
+    await FreeTDS.open();
+    FreeTDS.openErrorStream();
     FreeTDS.logger = (Level level, String msg) => logger.log(level, msg);
     errorStreamSubscription = FreeTDS.errorStream!.stream.listen((event) {
       logger.e(event);
     });
-    FreeTDS.setMessageStream(true);
+    FreeTDS.openMessageStream();
     messageStreamSubscription = FreeTDS.messageStream!.stream.listen((event) {
       logger.d(event);
     });
@@ -176,10 +175,10 @@ class _MyAppState extends State<MyApp> {
                                                 label: Expanded(
                                                   child: Text(
                                                     column,
-                                                      style: const TextStyle(fontWeight: FontWeight.bold),
-                                                    ),
+                                                    style: const TextStyle(fontWeight: FontWeight.bold),
                                                   ),
-                                                ))
+                                                ),
+                                              ))
                                         ],
                                         rows: table.data
                                             .mapIndexed((i, row) => DataRow(
@@ -191,7 +190,7 @@ class _MyAppState extends State<MyApp> {
                                                     ...table.columns.map((column) => DataCell(
                                                           Text(row[column]?.toString() ?? "NULL"),
                                                           placeholder: row[column] == null,
-                                                          ))
+                                                        ))
                                                   ],
                                                 ))
                                             .toList(),
@@ -226,7 +225,7 @@ class _MyAppState extends State<MyApp> {
       var database = this.database.text.isNotEmpty ? this.database.text : null;
       var encryption = this.encryption.text.isNotEmpty ? SYBEncryptionLevel.values.firstWhere((it) => it.value == this.encryption.text) : null;
       try {
-        await _freetdsPlugin.connect(host: hostname.text, username: username.text, password: password.text, database: database, encryption: encryption);
+        FreeTDS.connect(host: hostname.text, username: username.text, password: password.text, database: database, encryption: encryption);
       } on FreeTDSException catch (e, st) {
         logger.e("Connection exception", error: e, stackTrace: st);
         setState(() {
@@ -247,7 +246,7 @@ class _MyAppState extends State<MyApp> {
       logger.i("execute ...");
 
       try {
-        tmpResult = await _freetdsPlugin.query(query.text, []);
+        tmpResult = FreeTDS.query(query.text, []);
       } on FreeTDSException catch (e, st) {
         logger.e("Query execute exception", error: e, stackTrace: st);
         setState(() {
@@ -276,13 +275,12 @@ class _MyAppState extends State<MyApp> {
           }
         })}");
       }
-
     } catch (e, st) {
       logger.e("Process exception", error: e, stackTrace: st);
     }
 
     try {
-      await _freetdsPlugin.disconnect();
+      FreeTDS.disconnect();
     } catch (e, st) {
       logger.e("Disconnection exception", error: e, stackTrace: st);
     }

@@ -8,6 +8,7 @@ import 'package:freetds/src/library/model/model.dart';
 // Dart function pointer types
 typedef dbgetuserdata_Dart = Pointer<Uint8> Function(Pointer<DBPROCESS> dbproc);
 typedef dbhasretstat_Dart = int Function(Pointer<DBPROCESS> dbproc);
+typedef dbgetlasterror_Dart = Pointer<DBERROR> Function();
 typedef dbinit_Dart = int Function();
 typedef dbiordesc_Dart = int Function(Pointer<DBPROCESS> dbproc);
 typedef dberrhandle_Dart = void Function(Pointer<NativeFunction<ehandlefunc_Native>> handler);
@@ -53,6 +54,7 @@ typedef dbsqlexecparams_Dart = int Function(Pointer<DBPROCESS> dbproc, Pointer<U
 // Function pointer types for C functions
 typedef dbgetuserdata_Native = Pointer<Uint8> Function(Pointer<DBPROCESS> dbproc);
 typedef dbhasretstat_Native = Int32 Function(Pointer<DBPROCESS> dbproc);
+typedef dbgetlasterror_Native = Pointer<DBERROR> Function();
 typedef dbinit_Native = Int32 Function();
 typedef dbiordesc_Native = Int32 Function(Pointer<DBPROCESS> dbproc);
 typedef ehandlefunc_Native = Int32 Function(Pointer<DBPROCESS> dbproc, Int32 severity, Int32 dberr, Int32 oserr, Pointer<Utf8> dberrstr, Pointer<Utf8> oserrstr);

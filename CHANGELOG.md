@@ -1,7 +1,19 @@
+# 2.0.0 (August 4, 2024)
+
+* Updated the library version to v1.4.22
+* Rebuilt macOS for x86_64 and arm64
+* Rebuilt iOS for arm64 on real devices and for x86_64 and arm64 on simulators
+* Rebuilt Windows
+* FreeTDS is now a fully static class
+* Replaced `FreeTDS.lastError` with the library's `dbgetlasterror` method
+* Added `setMessageHandler` to set a custom message handler function
+* Added `setErrorHandler` to set a custom error handler function
+* Removed the default message handler and error handler functions
+
 # 1.3.0 (July 18, 2024)
 
 * SYBLONGCHAR data type now supported
-* Added *appName* connection parameter
+* Added `appName` connection parameter
 
 # 1.2.0 (June 27, 2024)
 

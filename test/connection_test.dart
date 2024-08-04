@@ -1,24 +1,22 @@
-import "dart:io";
+import 'dart:io';
 
-import "package:flutter_test/flutter_test.dart";
-import "package:freetds/freetds.dart";
+import 'package:flutter_test/flutter_test.dart';
+import 'package:freetds/freetds.dart';
 
 import 'utils/test_utils.dart';
 
 Future<void> main() async {
-  late FreeTDS freetds;
-
   setUp(() async {
-    freetds = TestUtils.setUpTest();
+    await TestUtils.setUpTest();
   });
 
   tearDown(() async {
-    await FreeTDS.afterTest();
+    await TestUtils.tearDownTest();
   });
 
-  test('Test connection', () async {
+  test('Test connection', () {
     // Open a connection (test_db should already exist)
-    await freetds.connect(
+    FreeTDS.connect(
       host: TestUtils.host,
       username: TestUtils.username,
       password: TestUtils.password,
@@ -27,17 +25,17 @@ Future<void> main() async {
       appName: "Test App",
     );
     sleep(Duration(milliseconds: 300));
-    expect(FreeTDS.lastError, isNull);
+    TestUtils.expectNoError();
 
     // Finally, close the connection
-    await freetds.disconnect();
+    FreeTDS.disconnect();
     sleep(Duration(milliseconds: 300));
-    expect(FreeTDS.lastError, isNull);
+    TestUtils.expectNoError();
   });
 
-  test('Test connection error', () async {
+  test('Test connection error', () {
     try {
-      await freetds.connect(
+      FreeTDS.connect(
         host: "0.0.0.0:80",
         username: "...",
         password: "...",
@@ -46,17 +44,14 @@ Future<void> main() async {
       );
 
       fail("Exception not thrown");
-    } catch (e) {
-      expect(e, isInstanceOf<FreeTDSException>());
-      expect((e as FreeTDSException).message, equals(FreeTDSErrorMessage.connectionError.message));
+    } on FreeTDSException catch (e) {
+      expect(e.message, equals(FreeTDSErrorMessage.connectionError.message));
     }
 
-    expect(FreeTDS.lastError, isNotNull);
-    expect(FreeTDS.lastError!.error, equals("Unable to connect: Adaptive Server is unavailable or does not exist (0.0.0.0)"));
-    expect(FreeTDS.lastError!.severity, equals(9));
+    TestUtils.expectError("Unable to connect: Adaptive Server is unavailable or does not exist (0.0.0.0)", 9);
 
     // Finally, close the connection
-    await freetds.disconnect();
-    expect(FreeTDS.lastError, isNull);
+    FreeTDS.disconnect();
+    TestUtils.expectNoError();
   });
 }

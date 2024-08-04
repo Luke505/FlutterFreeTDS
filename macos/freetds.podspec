@@ -12,9 +12,9 @@ Pod::Spec.new do |s|
   s.platform = :osx, '10.14'
   s.library = 'c++'
 
-  s.preserve_paths = 'FreeTDS-macos.framework'
-  s.xcconfig = { 'OTHER_LDFLAGS' => '-framework FreeTDS-macos' }
-  s.vendored_frameworks = 'FreeTDS-macos.framework'
+  s.preserve_paths = 'FreeTDS-macOS.framework'
+  s.xcconfig = { 'OTHER_LDFLAGS' => '-framework FreeTDS-macOS' }
+  s.vendored_frameworks = 'FreeTDS-macOS.framework'
 
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
   s.swift_version = '5.0'

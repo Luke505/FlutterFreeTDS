@@ -12,9 +12,8 @@ Pod::Spec.new do |s|
   s.platform = :ios, '12.0'
   s.library = 'c++'
 
-  s.preserve_paths = 'FreeTDS-ios.framework'
-  s.xcconfig = { 'OTHER_LDFLAGS' => '-framework FreeTDS-ios' }
-  s.vendored_frameworks = 'FreeTDS-ios.framework'
+  s.preserve_paths = 'FreeTDS-iOS.xcframework'
+  s.vendored_frameworks = 'FreeTDS-iOS.xcframework'
 
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
   s.swift_version = '5.0'

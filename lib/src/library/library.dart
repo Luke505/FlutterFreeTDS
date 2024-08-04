@@ -1,34 +1,31 @@
 library freetds.library;
 
 import 'dart:ffi';
-import 'dart:io' show Platform;
+import 'dart:io';
 
 import 'package:freetds/src/library/model/functions.dart';
 
 class Library {
   late DynamicLibrary _library;
 
-  Library() {
-    if (Platform.isIOS) {
-      _library = DynamicLibrary.open('FreeTDS-ios.framework/FreeTDS-ios');
+  Library([String? libraryPath]) {
+    if (libraryPath != null) {
+      _library = DynamicLibrary.open(libraryPath);
     } else if (Platform.isMacOS) {
-      _library = DynamicLibrary.open('FreeTDS-macos.framework/FreeTDS-macos');
+      _library = DynamicLibrary.open('FreeTDS-macOS.framework/FreeTDS-macOS');
+    } else if (Platform.isIOS) {
+      _library = DynamicLibrary.open('FreeTDS-iOS.framework/FreeTDS-iOS');
     } else if (Platform.isWindows) {
       _library = DynamicLibrary.open('sybdb.dll');
     } else {
       throw UnsupportedError('FreeTDS is only supported on macOS, iOS and windows.');
     }
-
-    _loadLibraryFunctions();
-  }
-
-  Library.test(String libraryPath) {
-    _library = DynamicLibrary.open(libraryPath);
     _loadLibraryFunctions();
   }
 
   late dbgetuserdata_Dart dbgetuserdata;
   late dbhasretstat_Dart dbhasretstat;
+  late dbgetlasterror_Dart dbgetlasterror;
   late dbinit_Dart dbinit;
   late dbiordesc_Dart dbiordesc;
 
@@ -75,6 +72,7 @@ class Library {
   void _loadLibraryFunctions() {
     dbgetuserdata = _library.lookupFunction<dbgetuserdata_Native, dbgetuserdata_Dart>('dbgetuserdata');
     dbhasretstat = _library.lookupFunction<dbhasretstat_Native, dbhasretstat_Dart>('dbhasretstat');
+    dbgetlasterror = _library.lookupFunction<dbgetlasterror_Native, dbgetlasterror_Dart>('dbgetlasterror');
     dbinit = _library.lookupFunction<dbinit_Native, dbinit_Dart>('dbinit');
     dbiordesc = _library.lookupFunction<dbiordesc_Native, dbiordesc_Dart>('dbiordesc');
     dberrhandle = _library.lookupFunction<dberrhandle_Native, dberrhandle_Dart>('dberrhandle');

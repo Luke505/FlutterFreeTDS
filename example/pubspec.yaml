@@ -13,6 +13,7 @@ dependencies:
   tempo: ^0.5.2
   logger: ^2.0.0
   decimal: ^3.0.0
+  collection: ^1.0.0
   cupertino_icons: ^1.0.0
 
 dev_dependencies:

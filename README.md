@@ -29,8 +29,33 @@ Now that you've set up your SAP Sql Anywhere 17 environment, you can use FreeTDS
 
 ## FreeTDS Native Library
 
-FreeTDS for Flutter utilizes the native FreeTDS library version 1.3.18. Modifications and enhancements have been made to this version. You can review the specific changes in
+FreeTDS for Flutter utilizes the native FreeTDS library version 1.4.22. Modifications and enhancements have been made to this version. You can review the specific changes in
 the [changelog here](https://github.com/Luke505/AppleFreeTDS/blob/main/src/freetds/ChangeLog.md).
+
+### Build Instructions
+
+#### MacOS
+1. Build the project using Xcode for:
+    - Mac (Mac Catalyst, arm64, x86_64)
+
+#### iOS
+1. Build the project using Xcode for:
+	- Any iOS Device (arm64)
+	- Any iOS Simulator Device (arm64, x86_64)
+2. Merge the builds into a single XCFramework with the following command:
+   ```bash
+   xcodebuild -create-xcframework \
+   -framework ./Release-iphoneos/FreeTDS-iOS.framework \
+   -framework ./Release-iphonesimulator/FreeTDS-iOS.framework \
+   -output xcframeworks/FreeTDS-iOS.xcframework
+   ```
+
+#### Windows
+1. Install the following dependencies:
+	- [Strawberry Perl](https://strawberryperl.com)
+	- [Cygwin](https://www.cygwin.com)
+	- [Gperf](https://gnuwin32.sourceforge.net/packages/gperf.htm)
+2. Build the project using [CMake](https://cmake.org/download/)
 
 ## License
 

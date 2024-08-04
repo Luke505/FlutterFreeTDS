@@ -50,7 +50,7 @@ class Connection {
       case SYBTEXT:
       case SYBVARCHAR:
       case SYBLONGCHAR:
-        column.ref.size = min(column.ref.size, FreeTDS.instance.maxTextSize);
+        column.ref.size = min(column.ref.size, FreeTDS.maxTextSize);
         return NTBSTRINGBIND;
       case SYBBIGDATETIME:
         return BIGDATETIMEBIND;
