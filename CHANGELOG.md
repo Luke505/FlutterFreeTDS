@@ -1,3 +1,7 @@
+# 2.0.1 (April 9, 2025)
+
+* Updated the dependency device_info_plus version to ^11.0.0
+
 # 2.0.0 (August 4, 2024)
 
 * Updated the library version to v1.4.22
