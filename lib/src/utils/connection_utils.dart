@@ -1,16 +1,16 @@
-import 'dart:convert';
-import 'dart:ffi';
-import 'dart:math';
+import "dart:convert";
+import "dart:ffi";
+import "dart:math";
 
-import 'package:decimal/decimal.dart';
-import 'package:ffi/ffi.dart';
-import 'package:freetds/src/constants.dart';
-import 'package:freetds/src/error/freetds_error_message.dart';
-import 'package:freetds/src/error/freetds_exception.dart';
-import 'package:freetds/src/freetds.dart';
-import 'package:freetds/src/library/library.dart';
-import 'package:freetds/src/library/model/model.dart';
-import 'package:tempo/tempo.dart';
+import "package:decimal/decimal.dart";
+import "package:ffi/ffi.dart";
+import "package:freetds/src/constants.dart";
+import "package:freetds/src/error/freetds_error_message.dart";
+import "package:freetds/src/error/freetds_exception.dart";
+import "package:freetds/src/freetds.dart";
+import "package:freetds/src/library/library.dart";
+import "package:freetds/src/library/model/model.dart";
+import "package:tempo/tempo.dart";
 
 class Connection {
   static int getBindAndUpdate(Pointer<SQL_COLUMN> column) {
@@ -125,9 +125,7 @@ class Connection {
       case SYBFLT8:
         return column.ref.data.cast<Double>().value;
       case SYBREAL:
-        return num.parse(
-            Decimal.parse(column.ref.data.cast<Float>().value.toStringAsFixed(20)).toStringAsPrecision(7)
-        );
+        return num.parse(Decimal.parse(column.ref.data.cast<Float>().value.toStringAsFixed(20)).toStringAsPrecision(7));
       case SYBDECIMAL:
       case SYBNUMERIC:
         var codeUnits = column.ref.data.cast<Uint8>();
@@ -145,13 +143,15 @@ class Connection {
 
         if (columnTypeInfo.ref.scale == 0) {
           return num.parse(
-              Decimal.parse(utf8.decode(codeUnits.asTypedList(length)).trim()).ceil(scale: 0)
-                  .toStringAsPrecision(columnTypeInfo.ref.precision)
+            Decimal.parse(utf8.decode(codeUnits.asTypedList(length)).trim()) //
+                .ceil(scale: 0) //
+                .toStringAsPrecision(columnTypeInfo.ref.precision), //
           ).toInt();
         } else {
           return double.parse(
-              Decimal.parse(utf8.decode(codeUnits.asTypedList(length)).trim()).ceil(scale: columnTypeInfo.ref.scale)
-                  .toStringAsPrecision(columnTypeInfo.ref.precision)
+            Decimal.parse(utf8.decode(codeUnits.asTypedList(length)).trim()) //
+                .ceil(scale: columnTypeInfo.ref.scale) //
+                .toStringAsPrecision(columnTypeInfo.ref.precision), //
           );
         }
       case SYBMONEY4:
@@ -166,8 +166,18 @@ class Connection {
         }
         library.dbanydatecrack(connection, _value, column.ref.type, column.ref.data);
 
-        final offsetDateTime = OffsetDateTime(ZoneOffset.fromDuration(Duration(hours: _value.ref.datetzone)), _value.ref.dateyear, _value.ref.datemonth + 1, _value.ref.datedmonth, _value.ref.datehour,
-            _value.ref.dateminute, _value.ref.datesecond, _value.ref.datensecond);
+        final offsetDateTime = OffsetDateTime.fromLocalDateTime(
+          LocalDateTime(
+            _value.ref.dateyear,
+            _value.ref.datemonth + 1,
+            _value.ref.datedmonth,
+            _value.ref.datehour,
+            _value.ref.dateminute,
+            _value.ref.datesecond,
+            _value.ref.datensecond, //
+          ),
+          ZoneOffset.fromDuration(Duration(hours: _value.ref.datetzone)), //
+        );
         calloc.free(_value);
         return offsetDateTime;
       case SYBDATETIME:
@@ -180,7 +190,15 @@ class Connection {
         }
         library.dbanydatecrack(connection, _value, column.ref.type, column.ref.data);
 
-        final dateTime = LocalDateTime(_value.ref.dateyear, _value.ref.datemonth + 1, _value.ref.datedmonth, _value.ref.datehour, _value.ref.dateminute, _value.ref.datesecond, _value.ref.datensecond);
+        final dateTime = LocalDateTime(
+          _value.ref.dateyear,
+          _value.ref.datemonth + 1,
+          _value.ref.datedmonth,
+          _value.ref.datehour,
+          _value.ref.dateminute,
+          _value.ref.datesecond,
+          _value.ref.datensecond, //
+        );
         calloc.free(_value);
         return dateTime;
       case SYBDATETIME4:
@@ -190,7 +208,13 @@ class Connection {
         }
         library.dbdatecrack(connection, _value, column.ref.data as Pointer<DBDATETIME>);
 
-        final dateTime = LocalDateTime(_value.ref.dateyear, _value.ref.datemonth + 1, _value.ref.datedmonth, _value.ref.datehour, _value.ref.dateminute);
+        final dateTime = LocalDateTime(
+          _value.ref.dateyear,
+          _value.ref.datemonth + 1,
+          _value.ref.datedmonth,
+          _value.ref.datehour,
+          _value.ref.dateminute, //
+        );
         calloc.free(_value);
         return dateTime;
       case SYBDATE:
@@ -213,7 +237,12 @@ class Connection {
         }
         library.dbanydatecrack(connection, _value, column.ref.type, column.ref.data);
 
-        final time = LocalTime(_value.ref.datehour, _value.ref.dateminute, _value.ref.datesecond, _value.ref.datensecond);
+        final time = LocalTime(
+          _value.ref.datehour,
+          _value.ref.dateminute,
+          _value.ref.datesecond,
+          _value.ref.datensecond, //
+        );
         calloc.free(_value);
         return time;
       case SYBCHAR:

@@ -1,8 +1,8 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:freetds/src/library/model/native/tds_login.dart';
+import "package:freetds/src/library/model/native/tds_login.dart";
 
 base class LOGINREC extends Struct {
   external Pointer<TDSLOGIN> tds_login;

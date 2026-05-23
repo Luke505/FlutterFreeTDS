@@ -1,9 +1,9 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:ffi/ffi.dart';
-import 'package:freetds/src/library/model/native/tds_capabilities.dart';
+import "package:ffi/ffi.dart";
+import "package:freetds/src/library/model/native/tds_capabilities.dart";
 
 base class TDSLOGIN extends Struct {
   external Pointer<Utf8> server_name;

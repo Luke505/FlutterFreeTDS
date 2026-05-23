@@ -14,6 +14,6 @@ class IntQueryParamTestModel {
     required this.datalen,
     required this.endValue,
     required this.endDatatype,
-    required this.dartValue,
+    required this.dartValue, //
   });
 }

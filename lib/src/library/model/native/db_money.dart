@@ -1,6 +1,6 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
 base class DBMONEY extends Struct {
   @Int32()

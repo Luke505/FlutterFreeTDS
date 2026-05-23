@@ -1,8 +1,8 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:freetds/src/library/model/native/tds_capability_type.dart';
+import "package:freetds/src/library/model/native/tds_capability_type.dart";
 
 base class TDS_CAPABILITIES extends Struct {
   @Array(2)

@@ -267,9 +267,9 @@ const TDS_SUCCESS = 0;
 const TDS_FAIL = -1;
 const TDS_CANCELLED = -2;
 
-bool TDS_FAILED(rc) => rc < 0;
+bool TDS_FAILED(int rc) => rc < 0;
 
-bool TDS_SUCCEED(rc) => rc >= 0;
+bool TDS_SUCCEED(int rc) => rc >= 0;
 
 const DB_RES_INIT = 0;
 const DB_RES_RESULTSET_EMPTY = 1;

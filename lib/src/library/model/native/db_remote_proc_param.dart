@@ -1,6 +1,6 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
 base class DBREMOTE_PROC_PARAM extends Struct {
   external Pointer<DBREMOTE_PROC_PARAM> next;

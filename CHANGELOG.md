@@ -1,3 +1,13 @@
+# 3.0.0 (May 23, 2026)
+
+* Added Android support
+* Rebuilt iOS and macOS native libraries as `FreeTDS.xcframework` with unified `FreeTDS` naming
+* Added Swift Package Manager support for iOS and macOS
+* Refactored native access layer and added `FreeTDS.libraryQuery`
+* `connect`, `disconnect`, `query`, and `isConnected` are now async
+* Simplified `QueryParam`; advanced FFI binding moved to `LibraryQueryParam`
+* Updated Dart/Flutter minimum versions
+
 # 2.0.1 (April 9, 2025)
 
 * Updated the dependency device_info_plus version to ^11.0.0
@@ -21,7 +31,7 @@
 
 # 1.2.0 (June 27, 2024)
 
-* Rebuild FreeTDS-macos for x86_64, i386 & arm64, and FreeTDS-ios for armv7, arm64 & armv7s  
+* Rebuild FreeTDS-macOS for x86_64, i386 & arm64, and FreeTDS-iOS for armv7, arm64 & armv7s  
 
 ## 1.1.1 (April 6, 2024)
 

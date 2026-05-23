@@ -37,6 +37,14 @@ the [changelog here](https://github.com/Luke505/AppleFreeTDS/blob/main/src/freet
 #### MacOS
 1. Build the project using Xcode for:
     - Mac (Mac Catalyst, arm64, x86_64)
+2. Merge the builds into a single XCFramework with the following command:
+   ```bash
+	xcodebuild -create-xcframework \
+	-framework "$(pwd)/Release/FreeTDS.framework" \
+	-debug-symbols "$(pwd)/Release/FreeTDS.framework.dSYM" \
+	-output "$(pwd)/FreeTDS.xcframework"
+   ```
+3. Run [fix_macos_xcframework_plist.sh](scripts/fix_macos_xcframework_plist.sh)
 
 #### iOS
 1. Build the project using Xcode for:
@@ -44,11 +52,14 @@ the [changelog here](https://github.com/Luke505/AppleFreeTDS/blob/main/src/freet
 	- Any iOS Simulator Device (arm64, x86_64)
 2. Merge the builds into a single XCFramework with the following command:
    ```bash
-   xcodebuild -create-xcframework \
-   -framework ./Release-iphoneos/FreeTDS-iOS.framework \
-   -framework ./Release-iphonesimulator/FreeTDS-iOS.framework \
-   -output xcframeworks/FreeTDS-iOS.xcframework
+	xcodebuild -create-xcframework \
+	-framework "$(pwd)/Release-iphoneos/FreeTDS.framework" \
+	-debug-symbols "$(pwd)/Release-iphoneos/FreeTDS.framework.dSYM" \
+	-framework "$(pwd)/Release-iphonesimulator/FreeTDS.framework" \
+	-debug-symbols "$(pwd)/Release-iphonesimulator/FreeTDS.framework.dSYM" \
+	-output "$(pwd)/FreeTDS.xcframework"
    ```
+3. Run [fix_ios_xcframework_plist.sh](scripts/fix_ios_xcframework_plist.sh)
 
 #### Windows
 1. Install the following dependencies:

@@ -3,19 +3,18 @@ description: Demonstrates how to use the freetds plugin.
 publish_to: 'none'
 
 environment:
-  sdk: '>=3.1.4 <4.0.0'
+  sdk: '>=3.7.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
   freetds:
     path: ../
-  tempo: ^0.5.2
-  logger: ^2.0.0
-  decimal: ^3.0.0
-  collection: ^1.0.0
-  cupertino_icons: ^1.0.0
-
+  tempo: ^1.2.2
+  logger: ^2.7.0
+  decimal: ^3.2.4
+  collection: ^1.19.1
+  cupertino_icons: ^1.0.9
 dev_dependencies:
   flutter_lints:
 

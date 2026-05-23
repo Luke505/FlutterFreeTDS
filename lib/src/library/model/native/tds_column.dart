@@ -1,11 +1,11 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:ffi/ffi.dart';
-import 'package:freetds/src/library/model/native/alias.dart';
-import 'package:freetds/src/library/model/native/bcp_col_data.dart';
-import 'package:freetds/src/library/model/native/tds_column_funcs.dart';
+import "package:ffi/ffi.dart";
+import "package:freetds/src/library/model/native/alias.dart";
+import "package:freetds/src/library/model/native/bcp_col_data.dart";
+import "package:freetds/src/library/model/native/tds_column_funcs.dart";
 
 base class TDSCOLUMN extends Struct {
   external Pointer<TDSCOLUMNFUNCS> funcs;

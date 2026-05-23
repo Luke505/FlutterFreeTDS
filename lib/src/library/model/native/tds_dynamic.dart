@@ -1,9 +1,9 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:ffi/ffi.dart';
-import 'package:freetds/src/library/model/native/tds_param_info.dart';
+import "package:ffi/ffi.dart";
+import "package:freetds/src/library/model/native/tds_param_info.dart";
 
 base class TDSDYNAMIC extends Struct {
   external Pointer<TDSDYNAMIC> next;

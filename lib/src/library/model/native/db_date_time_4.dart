@@ -1,6 +1,6 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
 base class DBDATETIME4 extends Struct {
   @Uint16()

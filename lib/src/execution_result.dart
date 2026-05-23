@@ -1,6 +1,6 @@
 library freetds.execution_result;
 
-import 'dart:convert';
+import "dart:convert";
 
 class FreeTDSExecutionResultTable {
   int affectedRows = 0;
@@ -14,7 +14,7 @@ class FreeTDSExecutionResultTable {
   }
 
   @override
-  String toString() => 'FreeTDSExecutionResultTable{affectedRows: $affectedRows, columns: $columns, data: $data}';
+  String toString() => "FreeTDSExecutionResultTable{affectedRows: $affectedRows, columns: $columns, data: $data}";
 
   Map<String, dynamic> toJson() => {
         "affectedRows": this.affectedRows,

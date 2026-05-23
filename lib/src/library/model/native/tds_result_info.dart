@@ -1,9 +1,9 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:freetds/src/library/model/native/tds_column.dart';
-import 'package:freetds/src/library/model/native/tds_socket.dart';
+import "package:freetds/src/library/model/native/tds_column.dart";
+import "package:freetds/src/library/model/native/tds_socket.dart";
 
 base class TDSRESULTINFO extends Struct {
   external Pointer<Pointer<TDSCOLUMN>> columns;

@@ -1,8 +1,8 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:ffi/ffi.dart';
+import "package:ffi/ffi.dart";
 
 base class SQL_COLUMN extends Struct {
   external Pointer<Utf8> name;

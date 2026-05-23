@@ -1,0 +1,15 @@
+name: dart_docker
+version: 0.0.2
+description: "A Dart client for the Docker API via local unix socket."
+homepage: https://github.com/invertase/dart_docker
+repository: https://github.com/invertase/dart_docker
+issue_tracker: https://github.com/invertase/dart_docker/issues
+
+environment:
+  sdk: '>=3.7.0 <4.0.0'
+
+dependencies:
+  collection: ^1.19.1
+  http: ^1.6.0
+  intl: ^0.20.2
+  meta: ^1.18.2

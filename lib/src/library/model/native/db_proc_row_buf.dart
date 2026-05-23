@@ -1,6 +1,6 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
 base class DBPROC_ROWBUF extends Struct {
   @Int32()

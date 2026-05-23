@@ -1,11 +1,11 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:ffi/ffi.dart';
-import 'package:freetds/src/library/model/native/db_numeric.dart';
-import 'package:freetds/src/library/model/native/tds_iconv_info.dart';
-import 'package:freetds/src/library/model/native/tds_result_info.dart';
+import "package:ffi/ffi.dart";
+import "package:freetds/src/library/model/native/db_numeric.dart";
+import "package:freetds/src/library/model/native/tds_iconv_info.dart";
+import "package:freetds/src/library/model/native/tds_result_info.dart";
 
 typedef DBDECIMAL = DBNUMERIC;
 

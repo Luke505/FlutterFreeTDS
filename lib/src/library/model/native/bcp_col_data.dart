@@ -1,8 +1,8 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:freetds/src/library/model/native/alias.dart';
+import "package:freetds/src/library/model/native/alias.dart";
 
 base class BCPCOLDATA extends Struct {
   external Pointer<TDS_UCHAR> data;

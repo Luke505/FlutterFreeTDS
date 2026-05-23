@@ -7,7 +7,7 @@ class FreeTDSMessage {
   const FreeTDSMessage(this.message, this.severity);
 
   @override
-  String toString() => 'FreeTDSMessage{message: $message, severity: $severity}';
+  String toString() => "FreeTDSMessage{message: $message, severity: $severity}";
 
   Map<String, dynamic> toJson() => {
         "message": this.message,

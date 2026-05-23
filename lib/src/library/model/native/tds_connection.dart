@@ -1,17 +1,17 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:ffi/ffi.dart';
-import 'package:freetds/src/library/model/native/alias.dart';
-import 'package:freetds/src/library/model/native/tds_authentication.dart';
-import 'package:freetds/src/library/model/native/tds_capabilities.dart';
-import 'package:freetds/src/library/model/native/tds_context.dart';
-import 'package:freetds/src/library/model/native/tds_cursor.dart';
-import 'package:freetds/src/library/model/native/tds_dynamic.dart';
-import 'package:freetds/src/library/model/native/tds_env.dart';
-import 'package:freetds/src/library/model/native/tds_packet.dart';
-import 'package:freetds/src/library/model/native/tds_poll_wake_up.dart';
+import "package:ffi/ffi.dart";
+import "package:freetds/src/library/model/native/alias.dart";
+import "package:freetds/src/library/model/native/tds_authentication.dart";
+import "package:freetds/src/library/model/native/tds_capabilities.dart";
+import "package:freetds/src/library/model/native/tds_context.dart";
+import "package:freetds/src/library/model/native/tds_cursor.dart";
+import "package:freetds/src/library/model/native/tds_dynamic.dart";
+import "package:freetds/src/library/model/native/tds_env.dart";
+import "package:freetds/src/library/model/native/tds_packet.dart";
+import "package:freetds/src/library/model/native/tds_poll_wake_up.dart";
 
 base class TDSCONNECTION extends Struct {
   @Uint16()

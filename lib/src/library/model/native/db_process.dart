@@ -1,17 +1,17 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:freetds/src/constants.dart';
-import 'package:freetds/src/library/model/native/bcp_host_file_info.dart';
-import 'package:freetds/src/library/model/native/db_option.dart';
-import 'package:freetds/src/library/model/native/db_proc_row_buf.dart';
-import 'package:freetds/src/library/model/native/db_remote_proc.dart';
-import 'package:freetds/src/library/model/native/db_string.dart';
-import 'package:freetds/src/library/model/native/db_type_info.dart';
-import 'package:freetds/src/library/model/native/null_rep.dart';
-import 'package:freetds/src/library/model/native/tds_bcp_info.dart';
-import 'package:freetds/src/library/model/native/tds_socket.dart';
+import "package:freetds/src/constants.dart";
+import "package:freetds/src/library/model/native/bcp_host_file_info.dart";
+import "package:freetds/src/library/model/native/db_option.dart";
+import "package:freetds/src/library/model/native/db_proc_row_buf.dart";
+import "package:freetds/src/library/model/native/db_remote_proc.dart";
+import "package:freetds/src/library/model/native/db_string.dart";
+import "package:freetds/src/library/model/native/db_type_info.dart";
+import "package:freetds/src/library/model/native/null_rep.dart";
+import "package:freetds/src/library/model/native/tds_bcp_info.dart";
+import "package:freetds/src/library/model/native/tds_socket.dart";
 
 base class DBPROCESS extends Struct {
   external Pointer<TDSSOCKET> tds_socket;

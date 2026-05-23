@@ -1,8 +1,8 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:freetds/src/library/model/native/db_remote_proc_param.dart';
+import "package:freetds/src/library/model/native/db_remote_proc_param.dart";
 
 base class DBREMOTE_PROC extends Struct {
   external Pointer<DBREMOTE_PROC> next;

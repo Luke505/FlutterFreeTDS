@@ -1,10 +1,10 @@
 library freetds.library.model.dart;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:ffi/ffi.dart';
-import 'package:freetds/src/library/model/native/sql_column.dart';
-import 'package:freetds/src/utils/connection_utils.dart';
+import "package:ffi/ffi.dart";
+import "package:freetds/src/library/model/native/sql_column.dart";
+import "package:freetds/src/utils/connection_utils.dart";
 
 class SQLColumn {
   late String? name;
@@ -36,7 +36,7 @@ class SQLColumn {
   }
 
   @override
-  String toString() => 'SQLColumn{name: $name, type: $type, typeName: $typeName, size: $size, status: $status, data: $data}';
+  String toString() => "SQLColumn{name: $name, type: $type, typeName: $typeName, size: $size, status: $status, data: $data}";
 
   Map<String, dynamic> toJson() => {"name": name, "type": type, "typeName": typeName, "size": size, "status": status, "data": data};
 }

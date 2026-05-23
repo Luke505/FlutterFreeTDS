@@ -7,13 +7,14 @@ Pod::Spec.new do |s|
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'DeveloperPass' => 'developerpass.net' }
   s.source           = { :path => '.' }
-  s.source_files     = 'Classes/**/*'
+  s.source_files     = 'freetds/Sources/freetds/**/*.{swift,h}'
+  s.public_header_files = 'freetds/Sources/freetds/include/freetds/*.h'
   s.dependency 'Flutter'
   s.platform = :ios, '12.0'
   s.library = 'c++'
 
-  s.preserve_paths = 'FreeTDS-iOS.xcframework'
-  s.vendored_frameworks = 'FreeTDS-iOS.xcframework'
+  s.preserve_paths = 'freetds/FreeTDS.xcframework'
+  s.vendored_frameworks = 'freetds/FreeTDS.xcframework'
 
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
   s.swift_version = '5.0'

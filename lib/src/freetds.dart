@@ -1,24 +1,29 @@
 library freetds.freetds;
 
-import 'dart:async';
-import 'dart:convert';
-import 'dart:ffi';
-import 'dart:io' show Platform;
+import "dart:async";
+import "dart:ffi";
+import "dart:io" show Platform;
 
-import 'package:ffi/ffi.dart';
-import 'package:flutter/foundation.dart';
-import 'package:freetds/src/communication/freetds_error.dart';
-import 'package:freetds/src/communication/freetds_message.dart';
-import 'package:freetds/src/constants.dart';
-import 'package:freetds/src/error/freetds_error_message.dart';
-import 'package:freetds/src/error/freetds_exception.dart';
-import 'package:freetds/src/execution_result.dart';
-import 'package:freetds/src/library/library.dart';
-import 'package:freetds/src/library/model/functions.dart';
-import 'package:freetds/src/library/model/model.dart';
-import 'package:freetds/src/query_param.dart';
-import 'package:freetds/src/utils/connection_utils.dart';
-import 'package:logger/logger.dart';
+import "package:ffi/ffi.dart";
+import "package:flutter/foundation.dart";
+import "package:freetds/src/communication/freetds_error.dart";
+import "package:freetds/src/communication/freetds_message.dart";
+import "package:freetds/src/constants.dart";
+import "package:freetds/src/error/freetds_error_message.dart";
+import "package:freetds/src/error/freetds_exception.dart";
+import "package:freetds/src/execution_result.dart";
+import "package:freetds/src/library/action/context/library_action_context.dart";
+import "package:freetds/src/library/action/context/native_method_channel_action_context.dart";
+import "package:freetds/src/library/action/library_action.dart";
+import "package:freetds/src/library/action/model/library/library_query_param.dart";
+import "package:freetds/src/library/action/model/native/native_method_channel_query_param.dart";
+import "package:freetds/src/library/action/native_method_channel_action.dart";
+import "package:freetds/src/library/library.dart";
+import "package:freetds/src/library/model/functions.dart";
+import "package:freetds/src/library/model/model.dart";
+import "package:freetds/src/library/native_method_channel.dart";
+import "package:freetds/src/query_param.dart";
+import "package:logger/logger.dart";
 
 class FreeTDS {
   static const int defaultTimeout = 5;
@@ -29,13 +34,12 @@ class FreeTDS {
 
   static Pointer<LOGINREC> _login = nullptr;
   static Pointer<DBPROCESS> _connection = nullptr;
-  static Pointer<SQL_COLUMN> _columns = nullptr;
-  static int _numColumns = 0;
 
   static Level loggerLevel = Level.trace;
   static Function(Level, String)? logger;
 
   static Library? _library;
+  static NativeMethodChannel? _nativeMethodChannel;
 
   static StreamController<FreeTDSError>? errorStream;
   static StreamController<FreeTDSMessage>? messageStream;
@@ -43,30 +47,32 @@ class FreeTDS {
   static Future<void> open() async {
     if (Platform.isMacOS || Platform.isIOS || Platform.isWindows) {
       _library = Library();
+
+      if (_library!.dbinit() == FAIL) {
+        throw StateError("FreeTDS db init failed.");
+      }
+
+      _library!.dbgetlasterror().ref.dberrstr = nullptr;
+      await closeErrorStream();
+      await closeMessageStream();
+      await setMessageHandler(nullptr);
+      await setErrorHandler(nullptr);
+    } else if (Platform.isAndroid) {
+      _nativeMethodChannel = NativeMethodChannel();
     } else {
-      throw UnsupportedError('FreeTDS is only supported on macOS, iOS and windows.');
+      throw UnsupportedError("FreeTDS is only supported on macOS, iOS and windows.");
     }
-
-    if (_library!.dbinit() == FAIL) {
-      throw StateError('FreeTDS db init failed.');
-    }
-
-    _library!.dbgetlasterror().ref.dberrstr = nullptr;
-    await closeErrorStream();
-    await closeMessageStream();
-    setMessageHandler(nullptr);
-    setErrorHandler(nullptr);
   }
 
-  static void setMessageHandler(Pointer<NativeFunction<mhandlefunc_Native>> handler) async {
+  static Future<void> setMessageHandler(Pointer<NativeFunction<mhandlefunc_Native>> handler) async {
     _library!.dbmsghandle(handler);
   }
 
-  static void setErrorHandler(Pointer<NativeFunction<ehandlefunc_Native>> handler) async {
+  static Future<void> setErrorHandler(Pointer<NativeFunction<ehandlefunc_Native>> handler) async {
     _library!.dberrhandle(handler);
   }
 
-  static void openErrorStream() async {
+  static Future<void> openErrorStream() async {
     if (errorStream == null) {
       errorStream = StreamController.broadcast();
     }
@@ -100,30 +106,60 @@ class FreeTDS {
     }
   }
 
-  static bool isInitialized() => _library != null;
+  static bool isInitialized() => _library != null || _nativeMethodChannel != null;
 
-  static bool isConnected() => isInitialized() && _library!.dbdead(_connection) == 0;
+  static Future<bool> isConnected() async {
+    if (!isInitialized()) {
+      return false;
+    }
+
+    if (_library != null) {
+      return await LibraryAction.isConnected(
+        LibraryActionContext(
+          library: _library!,
+          login: _login,
+          timeout: timeout,
+          connection: _connection,
+          loggerLevel: loggerLevel,
+          logger: logger, //
+        ),
+      );
+    } else if (_nativeMethodChannel != null) {
+      return await NativeMethodChannelAction.isConnected(
+        NativeMethodChannelActionContext(
+          nativeMethodChannel: _nativeMethodChannel!,
+          timeout: timeout,
+          loggerLevel: loggerLevel,
+          logger: logger, //
+        ),
+      );
+    } else {
+      return false;
+    }
+  }
 
   // region Test
 
   @visibleForTesting
-  static Future<void> openForTest(String libraryPath) async {
+  static Future<void> openForTest(String? libraryPath) async {
     if (Platform.isMacOS || Platform.isIOS || Platform.isWindows) {
       _library = Library(libraryPath);
+
+      if (_library!.dbinit() == FAIL) {
+        throw StateError("FreeTDS db init failed.");
+      }
+
+      _library!.dbgetlasterror().ref.dberrstr = nullptr;
+      _library!.dbgetlasterror().ref.severity = -1;
+      await openErrorStream();
+      openMessageStream();
+      await setMessageHandler(Pointer.fromFunction<mhandlefunc_Native>(_handleMessage, TDS_SUCCESS));
+      await setErrorHandler(Pointer.fromFunction<ehandlefunc_Native>(_handleError, CANCEL));
+    } else if (Platform.isAndroid) {
+      _nativeMethodChannel = NativeMethodChannel();
     } else {
-      throw UnsupportedError('FreeTDS is only supported on macOS, iOS and windows.');
+      throw UnsupportedError("FreeTDS is only supported on macOS, iOS and windows.");
     }
-
-    if (_library!.dbinit() == FAIL) {
-      throw StateError('FreeTDS db init failed.');
-    }
-
-    _library!.dbgetlasterror().ref.dberrstr = nullptr;
-    _library!.dbgetlasterror().ref.severity = -1;
-    openErrorStream();
-    openMessageStream();
-    setMessageHandler(Pointer.fromFunction<mhandlefunc_Native>(_handleMessage, TDS_SUCCESS));
-    setErrorHandler(Pointer.fromFunction<ehandlefunc_Native>(_handleError, CANCEL));
   }
 
   @visibleForTesting
@@ -175,341 +211,199 @@ class FreeTDS {
 
   // endregion
 
-  // region Cleanup
-
-  static void _cleanupAfterTable() {
-    if (_columns != nullptr) {
-      Pointer<SQL_COLUMN> column;
-      for (int i = 0; i < _numColumns; i++) {
-        try {
-          column = _columns+(i);
-          if (column != nullptr) {
-            if (column.ref.data != nullptr) {
-              calloc.free(column.ref.data);
-              column.ref.data = nullptr;
-            }
-            if (column.ref.status != nullptr) {
-              calloc.free(column.ref.status);
-              column.ref.status = nullptr;
-            }
-          }
-        } catch (_) {
-          break;
-        }
-      }
-      calloc.free(_columns);
-      _columns = nullptr;
-    }
-  }
-
-  static void _cleanupAfterExecution() {
-    _cleanupAfterTable();
-    if (_connection != nullptr) {
-      try {
-        _library!.dbfreebuf(_connection);
-      } catch (_) {}
-    }
-  }
-
-  static void _cleanupAfterConnection() {
-    _cleanupAfterExecution();
-    if (_login != nullptr) {
-      try {
-        _library!.dbloginfree(_login);
-      } catch (_) {}
-      _login = nullptr;
-    }
-  }
-
-  // endregion
-
   // region Action
 
-  static void connect(
-      {required String host,
-      required String username,
-      required String password,
-      String? database,
-      SYBEncryptionLevel? encryption,
-      String? charset = "utf8",
-      String? lang,
-      String? appName,
-      int? version = DBVERSION_100}) {
+  static Future<void> connect({
+    required String host,
+    required String username,
+    required String password,
+    String? database,
+    SYBEncryptionLevel? encryption,
+    String? charset = "utf8",
+    String? lang,
+    String? appName,
+    int? version = DBVERSION_100,
+  }) async {
     assert(host.isNotEmpty);
     assert(username.isNotEmpty);
     assert(password.isNotEmpty);
 
-    _library!.dbgetlasterror().ref.dberrstr = nullptr;
-    _library!.dbgetlasterror().ref.severity = -1;
+    if (_library != null) {
+      var context = LibraryActionContext(
+        library: _library!,
+        login: _login,
+        timeout: timeout,
+        connection: _connection,
+        loggerLevel: loggerLevel,
+        logger: logger, //
+      );
 
-    if (isConnected()) {
-      throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.pendingConnectionError);
-    }
+      await LibraryAction.connect(
+        context: context,
+        host: host,
+        username: username,
+        password: password,
+        database: database,
+        encryption: encryption,
+        charset: charset,
+        lang: lang,
+        appName: appName,
+        version: version,
+      );
 
-    _login = _library!.dblogin();
-    if (_login == nullptr) {
-      _cleanupAfterConnection();
-      throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
-    }
+      _connection = context.connection;
+      _login = context.login;
+    } else if (_nativeMethodChannel != null) {
+      var context = NativeMethodChannelActionContext(
+        nativeMethodChannel: _nativeMethodChannel!,
+        timeout: timeout,
+        loggerLevel: loggerLevel,
+        logger: logger, //
+      );
 
-    if (_library!.dbsetlname(_login, host.toNativeUtf8(), DBSETHOST) == 0) {
-      _cleanupAfterConnection();
-      throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
+      await NativeMethodChannelAction.connect(
+        context: context,
+        host: host,
+        username: username,
+        password: password,
+        database: database, //
+      );
+    } else {
+      throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.notInitializedError);
     }
-    if (_library!.dbsetlname(_login, username.toNativeUtf8(), DBSETUSER) == 0) {
-      _cleanupAfterConnection();
-      throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
-    }
-    if (_library!.dbsetlname(_login, password.toNativeUtf8(), DBSETPWD) == 0) {
-      _cleanupAfterConnection();
-      throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
-    }
-
-    if (encryption != null) {
-      if (_library!.dbsetlname(_login, encryption.value.toNativeUtf8(), DBSETENCRYPTION) == 0) {
-        _cleanupAfterConnection();
-        throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
-      }
-    }
-
-    if (charset != null) {
-      if (_library!.dbsetlname(_login, charset.toNativeUtf8(), DBSETCHARSET) == 0) {
-        _cleanupAfterConnection();
-        throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
-      }
-    }
-
-    if (lang != null) {
-      if (_library!.dbsetlname(_login, lang.toNativeUtf8(), DBSETNATLANG) == 0) {
-        _cleanupAfterConnection();
-        throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
-      }
-    }
-
-    if (appName != null) {
-      if (_library!.dbsetlname(_login, appName.toNativeUtf8(), DBSETAPP) == 0) {
-        _cleanupAfterConnection();
-        throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
-      }
-    }
-
-    if (version != null) {
-      if (_library!.dbsetlversion(_login, version) == 0) {
-        _cleanupAfterConnection();
-        throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.initError);
-      }
-    }
-
-    _library!.dbsetlogintime(timeout);
-
-    _connection = _library!.dbopen(_login, host.toNativeUtf8());
-    if (_connection == nullptr) {
-      _cleanupAfterConnection();
-      throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.connectionError);
-    }
-
-    if (database != null) {
-      int returnCode = _library!.dbuse(_connection, database.toNativeUtf8());
-      if (returnCode == FAIL) {
-        _cleanupAfterConnection();
-        throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.databaseUseError);
-      }
-    }
-
-    _cleanupAfterConnection();
   }
 
-  static List<FreeTDSExecutionResultTable> query(String sql, [List<QueryParam>? params]) {
+  static Future<List<FreeTDSExecutionResultTable>> query(String sql, [List<QueryParam>? params]) async {
     assert(sql.isNotEmpty);
 
-    if (!FreeTDS.isConnected()) {
+    if (!await FreeTDS.isConnected()) {
       throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.noConnectionError);
     }
 
-    _library!.dbgetlasterror().ref.dberrstr = nullptr;
-    _library!.dbgetlasterror().ref.severity = -1;
+    List<FreeTDSExecutionResultTable> result;
 
-    try {
-      _library!.dbsettime(timeout);
-      Pointer<DBERROR> lastError = _library!.dbgetlasterror();
-      if (lastError != nullptr && lastError.ref.dberrstr != nullptr) {
-        throw FreeTDSException.fromFreeTDSError(FreeTDSError.fromDBError(lastError.ref));
-      }
+    if (_library != null) {
+      var context = LibraryActionContext(
+        library: _library!,
+        login: _login,
+        timeout: timeout,
+        connection: _connection,
+        loggerLevel: loggerLevel,
+        logger: logger, //
+      );
 
-      Pointer<TDSQUERYPARAM> queryParams = nullptr, lastQueryParam = nullptr;
+      result = await LibraryAction.query(context: context, sql: sql, params: params?.map((param) => LibraryQueryParam.fromQueryParam(param)).toList());
 
-      if (params != null) {
-        for (int i = 0; i < params.length; i++) {
-          Pointer<TDSQUERYPARAM> queryParam = calloc<TDSQUERYPARAM>();
-          if (queryParam == nullptr) {
-            throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.outOfMemoryError);
-          }
+      _connection = context.connection;
+      _login = context.login;
+    } else if (_nativeMethodChannel != null) {
+      var context = NativeMethodChannelActionContext(
+        nativeMethodChannel: _nativeMethodChannel!,
+        timeout: timeout,
+        loggerLevel: loggerLevel,
+        logger: logger, //
+      );
 
-          queryParam.ref.name = params[i].name?.toNativeUtf8() ?? (i + 1).toString().toNativeUtf8();
-          queryParam.ref.output = params[i].output;
-          queryParam.ref.datatype = params[i].datatype;
-          queryParam.ref.maxlen = params[i].maxlen;
-          queryParam.ref.scale = params[i].scale ?? 0;
-          queryParam.ref.precision = params[i].precision ?? 0;
-          queryParam.ref.datalen = params[i].datalen;
-          queryParam.ref.value = params[i].getValue(_library!, _connection) ?? nullptr;
-
-          if (lastQueryParam == nullptr) {
-            queryParams = queryParam;
-          } else {
-            lastQueryParam.ref.next = queryParam;
-          }
-
-          if (loggerLevel.value >= Level.trace.value && logger != null) {
-            logger!(
-                Level.trace,
-                "PARAMETER > Column ${params[i].name ?? (i + 1)}, type: ${queryParam.ref.datatype} (${Connection.getColumnTypeName(queryParam.ref.datatype)}),"
-                " datalen: ${queryParam.ref.datalen}, value: ${params[i].getValue(_library!, _connection)?.asTypedList(queryParam.ref.datalen)}");
-          }
-
-          lastQueryParam = queryParam;
-        }
-      }
-
-      Pointer<Utf8> sqlUtf8 = sql.toNativeUtf8();
-      int returnCode = _library!.dbsqlexecparams(_connection, sqlUtf8, queryParams);
-      if (returnCode == FAIL) {
-        throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.executeCmdError);
-      }
-      lastError = _library!.dbgetlasterror();
-      if (lastError != nullptr && lastError.ref.dberrstr != nullptr) {
-        throw FreeTDSException.fromFreeTDSError(FreeTDSError.fromDBError(lastError.ref));
-      }
-
-      List<FreeTDSExecutionResultTable> tables = [];
-
-      while ((returnCode = _library!.dbresults(_connection)) != NO_MORE_RESULTS) {
-        lastError = _library!.dbgetlasterror();
-        if (lastError != nullptr && lastError.ref.dberrstr != nullptr) {
-          throw FreeTDSException.fromFreeTDSError(FreeTDSError.fromDBError(lastError.ref));
-        }
-
-        FreeTDSExecutionResultTable table = FreeTDSExecutionResultTable();
-        tables.add(table);
-
-        if (returnCode == FAIL) {
-          throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.getExecutionResultError);
-        }
-
-        table.affectedRows = _library!.dbcount(_connection);
-
-        _numColumns = _library!.dbnumcols(_connection);
-        if (_numColumns == 0) {
-          continue;
-        }
-
-        _columns = calloc<SQL_COLUMN>(_numColumns);
-        if (_columns == nullptr) {
-          throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.outOfMemoryError);
-        }
-
-        Pointer<SQL_COLUMN> column;
-        int rowCode;
-
-        lastError = _library!.dbgetlasterror();
-        if (lastError != nullptr && lastError.ref.dberrstr != nullptr) {
-          throw FreeTDSException.fromFreeTDSError(FreeTDSError.fromDBError(lastError.ref));
-        }
-
-        for (int columnIndex = 0; columnIndex < _numColumns; columnIndex++) {
-          int c = columnIndex + 1;
-          column = _columns+(columnIndex);
-          column.ref.name = _library!.dbcolname(_connection, c);
-          column.ref.type = _library!.dbcoltype(_connection, c);
-          column.ref.size = _library!.dbcollen(_connection, c);
-
-          final columnName = column.ref.name != nullptr ? column.ref.name.cast<Utf8>().toDartString() : "";
-          table.columns.add(columnName);
-
-          int bindType = Connection.getBindAndUpdate(column);
-
-          if (loggerLevel.value >= Level.trace.value && logger != null) {
-            logger!(
-                Level.trace,
-                "TYPE > Column $columnName, type: ${column.ref.type} (${Connection.getColumnTypeName(column.ref.type)}),"
-                " bindType: $bindType (${Connection.getColumnBindName(bindType)}), info: ${json.encode(SQLColumn.fromNative(column.ref))}");
-          }
-
-          Connection.bind(_library!, _connection, column, c, bindType);
-
-          lastError = _library!.dbgetlasterror();
-          if (lastError != nullptr && lastError.ref.dberrstr != nullptr) {
-            throw FreeTDSException.fromFreeTDSError(FreeTDSError.fromDBError(lastError.ref));
-          }
-        }
-        while ((rowCode = _library!.dbnextrow(_connection)) != NO_MORE_ROWS) {
-          switch (rowCode) {
-            case REG_ROW:
-              Map<String, dynamic> row = {};
-              for (int i = 0; i < _numColumns; i++) {
-                column = _columns+(i);
-                final columnName = column.ref.name != nullptr ? column.ref.name.cast<Utf8>().toDartString() : "";
-                dynamic value;
-                if (column.ref.status.value != -1) {
-                  if (loggerLevel.value >= Level.trace.value && logger != null) {
-                    logger!(Level.trace, "DATA > Column $columnName, info: ${json.encode(SQLColumn.fromNative(column.ref))}");
-                  }
-
-                  value = Connection.getData(_library!, _connection, column, i);
-
-                  lastError = _library!.dbgetlasterror();
-                  if (lastError != nullptr && lastError.ref.dberrstr != nullptr) {
-                    throw FreeTDSException.fromFreeTDSError(FreeTDSError.fromDBError(lastError.ref));
-                  }
-
-                  if (loggerLevel.value >= Level.trace.value && logger != null) {
-                    logger!(Level.trace, "DATA > Column $columnName, ${value != null ? "value: $value" : "value IS NULL"}");
-                  }
-                }
-                row[columnName] = value;
-              }
-              table.data.add(row);
-              break;
-            case BUF_FULL:
-              throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.bufferFullError);
-            case FAIL:
-              throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.unknownError);
-            default:
-          }
-        }
-
-        _cleanupAfterTable();
-      }
-
-      lastError = _library!.dbgetlasterror();
-      if (lastError != nullptr && lastError.ref.dberrstr != nullptr) {
-        throw FreeTDSException.fromFreeTDSError(FreeTDSError.fromDBError(lastError.ref));
-      }
-
-      _cleanupAfterExecution();
-      return tables;
-    } catch (_) {
-      _cleanupAfterExecution();
-      rethrow;
+      result = await NativeMethodChannelAction.query(context: context, sql: sql, params: params?.map((param) => NativeMethodChannelQueryParam.fromQueryParam(param)).toList());
+    } else {
+      throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.notInitializedError);
     }
+
+    return result;
   }
 
-  static void disconnect() {
-    _library!.dbgetlasterror().ref.dberrstr = nullptr;
-    _library!.dbgetlasterror().ref.severity = -1;
-    _cleanupAfterConnection();
-    if (_connection != nullptr) {
-      _library!.dbclose(_connection);
-      _connection = nullptr;
+  static Future<List<FreeTDSExecutionResultTable>> libraryQuery(String sql, [List<LibraryQueryParam>? params]) async {
+    assert(sql.isNotEmpty);
+
+    if (!await FreeTDS.isConnected()) {
+      throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.noConnectionError);
+    }
+
+    List<FreeTDSExecutionResultTable> result;
+
+    if (_library != null) {
+      var context = LibraryActionContext(
+        library: _library!,
+        login: _login,
+        timeout: timeout,
+        connection: _connection,
+        loggerLevel: loggerLevel,
+        logger: logger, //
+      );
+
+      result = await LibraryAction.query(context: context, sql: sql, params: params);
+
+      _connection = context.connection;
+      _login = context.login;
+    } else {
+      throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.notInitializedError);
+    }
+
+    return result;
+  }
+
+  static Future<void> disconnect() async {
+    if (_library != null) {
+      var context = LibraryActionContext(
+        library: _library!,
+        login: _login,
+        timeout: timeout,
+        connection: _connection,
+        loggerLevel: loggerLevel,
+        logger: logger, //
+      );
+
+      await LibraryAction.disconnect(context: context);
+
+      _connection = context.connection;
+      _login = context.login;
+    } else if (_nativeMethodChannel != null) {
+      var context = NativeMethodChannelActionContext(
+        nativeMethodChannel: _nativeMethodChannel!,
+        timeout: timeout,
+        loggerLevel: loggerLevel,
+        logger: logger, //
+      );
+
+      await NativeMethodChannelAction.disconnect(context: context);
+    } else {
+      throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.notInitializedError);
     }
   }
 
   static Future<void> close() async {
-    FreeTDS.disconnect();
-    _library!.dbexit();
+    await FreeTDS.disconnect();
+
+    if (_library != null) {
+      var context = LibraryActionContext(
+        library: _library!,
+        login: _login,
+        timeout: timeout,
+        connection: _connection,
+        loggerLevel: loggerLevel,
+        logger: logger, //
+      );
+
+      await LibraryAction.close(context: context);
+
+      _connection = context.connection;
+      _login = context.login;
+    } else if (_nativeMethodChannel != null) {
+      var context = NativeMethodChannelActionContext(
+        nativeMethodChannel: _nativeMethodChannel!,
+        timeout: timeout,
+        loggerLevel: loggerLevel,
+        logger: logger, //
+      );
+
+      await NativeMethodChannelAction.close(context: context);
+    } else {
+      throw FreeTDSException.fromErrorMessage(FreeTDSErrorMessage.notInitializedError);
+    }
+
     await FreeTDS.closeErrorStream();
     await FreeTDS.closeMessageStream();
   }
 
-// endregion
+  // endregion
 }

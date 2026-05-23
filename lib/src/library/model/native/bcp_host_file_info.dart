@@ -1,9 +1,9 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:freetds/src/library/model/native/alias.dart';
-import 'package:freetds/src/library/model/native/bcp_host_col_info.dart';
+import "package:freetds/src/library/model/native/alias.dart";
+import "package:freetds/src/library/model/native/bcp_host_col_info.dart";
 
 base class BCP_HOSTFILEINFO extends Struct {
   external Pointer<TDS_CHAR> hostfile;

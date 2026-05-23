@@ -1,8 +1,8 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:freetds/src/library/model/native/tds_locale.dart';
+import "package:freetds/src/library/model/native/tds_locale.dart";
 
 base class TDSCONTEXT extends Struct {
   external Pointer<TDSLOCALE> locale;

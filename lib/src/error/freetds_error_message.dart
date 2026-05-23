@@ -2,6 +2,7 @@ library freetds.error_message;
 
 enum FreeTDSErrorMessage {
   initError("Attempting to initialize failed."),
+  notInitializedError("Not initialized."),
   connectionError("Attempting to connect failed."),
   sendCmdError("Attempting to send command failed."),
   executeCmdError("Attempting to execute last command failed."),

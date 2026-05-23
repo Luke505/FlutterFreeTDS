@@ -1,8 +1,8 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:ffi/ffi.dart';
+import "package:ffi/ffi.dart";
 
 base class TDSQUERYPARAM extends Struct {
   external Pointer<TDSQUERYPARAM> next;

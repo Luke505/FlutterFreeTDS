@@ -42,3 +42,7 @@ app.*.symbols
 
 # Obfuscation related
 app.*.map.json
+
+# Swift Package Manager
+.build/
+.swiftpm/

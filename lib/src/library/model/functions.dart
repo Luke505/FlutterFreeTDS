@@ -1,9 +1,9 @@
 library freetds.library.model.dart;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:ffi/ffi.dart';
-import 'package:freetds/src/library/model/model.dart';
+import "package:ffi/ffi.dart";
+import "package:freetds/src/library/model/model.dart";
 
 // Dart function pointer types
 typedef dbgetuserdata_Dart = Pointer<Uint8> Function(Pointer<DBPROCESS> dbproc);

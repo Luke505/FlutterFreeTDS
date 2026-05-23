@@ -1,15 +1,15 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:freetds/src/library/model/native/alias.dart';
-import 'package:freetds/src/library/model/native/tds_connection.dart';
-import 'package:freetds/src/library/model/native/tds_cursor.dart';
-import 'package:freetds/src/library/model/native/tds_dynamic.dart';
-import 'package:freetds/src/library/model/native/tds_login.dart';
-import 'package:freetds/src/library/model/native/tds_packet.dart';
-import 'package:freetds/src/library/model/native/tds_param_info.dart';
-import 'package:freetds/src/library/model/native/tds_result_info.dart';
+import "package:freetds/src/library/model/native/alias.dart";
+import "package:freetds/src/library/model/native/tds_connection.dart";
+import "package:freetds/src/library/model/native/tds_cursor.dart";
+import "package:freetds/src/library/model/native/tds_dynamic.dart";
+import "package:freetds/src/library/model/native/tds_login.dart";
+import "package:freetds/src/library/model/native/tds_packet.dart";
+import "package:freetds/src/library/model/native/tds_param_info.dart";
+import "package:freetds/src/library/model/native/tds_result_info.dart";
 
 base class TDSSOCKET extends Struct {
   @Array(1)

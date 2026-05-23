@@ -1,7 +1,7 @@
 library freetds.error;
 
-import 'package:ffi/ffi.dart';
-import 'package:freetds/src/library/model/native/db_error.dart';
+import "package:ffi/ffi.dart";
+import "package:freetds/src/library/model/native/db_error.dart";
 
 class FreeTDSError {
   final String error;
@@ -14,7 +14,7 @@ class FreeTDSError {
         severity = dbError.severity;
 
   @override
-  String toString() => 'FreeTDSError{error: $error, severity: $severity}';
+  String toString() => "FreeTDSError{error: $error, severity: $severity}";
 
   Map<String, dynamic> toJson() => {
         "error": this.error,

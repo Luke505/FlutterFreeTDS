@@ -1,9 +1,9 @@
 library freetds.library.model.native;
 
-import 'dart:ffi';
+import "dart:ffi";
 
-import 'package:ffi/ffi.dart';
-import 'package:freetds/src/library/model/native/tds_result_info.dart';
+import "package:ffi/ffi.dart";
+import "package:freetds/src/library/model/native/tds_result_info.dart";
 
 base class TDSCURSOR extends Struct {
   external Pointer<TDSCURSOR> next;
